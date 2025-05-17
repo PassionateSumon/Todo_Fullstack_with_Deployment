@@ -1,0 +1,6 @@
+{
+    "name": "Sumon",
+    "email": "mitrasumon2001@gmail.com",
+    "password": "Abc@123",
+    "user_type": "admin"
+}

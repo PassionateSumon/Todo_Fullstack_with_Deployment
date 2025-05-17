@@ -1,0 +1,85 @@
+import Joi from "joi";
+import {
+  createTaskHandler,
+  deleteTaskHandler,
+  getAllTaskHandler,
+  getSingleTaskHandler,
+  updateTaskHandler,
+} from "../controller/task.controller";
+
+const prefix = "/task";
+
+export default [
+  {
+    method: "POST",
+    path: `${prefix}/create`,
+    handler: createTaskHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "task"],
+      description: "Create task",
+      validate: {
+        payload: Joi.object({
+          name: Joi.string().required(),
+          description: Joi.string().optional(),
+          status: Joi.string().required(),
+        }),
+      },
+      payload: {
+        parse: true,
+        output: "data",
+      },
+    },
+  },
+  {
+    method: "GET",
+    path: `${prefix}/all`,
+    handler: getAllTaskHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "task"],
+      description: "Get all task",
+    },
+  },
+  {
+    method: "GET",
+    path: `${prefix}/single/:id`,
+    handler: getSingleTaskHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "task"],
+      description: "Get single task",
+    },
+  },
+  {
+    method: "PUT",
+    path: `${prefix}/update/:id`,
+    handler: updateTaskHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "task"],
+      description: "Update task",
+      validate: {
+        payload: Joi.object({
+          name: Joi.string().optional(),
+          description: Joi.string().optional(),
+          status: Joi.string().optional(),
+        }).or("name", "description", "status"),
+      },
+      payload: {
+        parse: true,
+        output: "data",
+      },
+    },
+  },
+  {
+    method: "DELETE",
+    path: `${prefix}/delete/:id`,
+    handler: deleteTaskHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "task"],
+      description: "Delete task",
+    },
+  },
+];

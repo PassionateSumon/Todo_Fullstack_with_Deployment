@@ -1,0 +1,50 @@
+export default (sequelize: any, DataType: any) => {
+  const User = sequelize.define(
+    "User",
+    {
+      id: {
+        type: DataType.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataType.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: DataType.STRING,
+        allowNull: false,
+      },
+      username: {
+        type: DataType.STRING,
+        allowNull: true,
+      },
+      password: {
+        type: DataType.STRING,
+        allowNull: false,
+      },
+      isActive: {
+        type: DataType.BOOLEAN,
+        allowNull: false,
+      },
+      is_reset_password: {
+        type: DataType.BOOLEAN,
+        allowNull: false,
+      },
+      user_type: {
+        type: DataType.ENUM("admin", "user"),
+        allowNull: false,
+      },
+    },
+    { tableName: "User", timestamps: true }
+  );
+  User.associate = (models: any) => {
+    User.hasMany(models.Task, {
+      foreignKey: "user_id",
+      as: "tasks",
+      onDelete: "CASCADE",
+    });
+    User.hasMany(models.RefreshToken, { foreignKey: "userId" });
+  };
+  return User;
+};

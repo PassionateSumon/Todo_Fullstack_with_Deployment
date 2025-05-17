@@ -1,0 +1,67 @@
+import { Request, ResponseToolkit } from "@hapi/hapi";
+import {
+  LoginPayload,
+  ResetPasswordPayload,
+  signupPayload,
+} from "../../../common/interfaces/User.interface";
+import {
+  loginService,
+  logoutService,
+  resetPasswordService,
+  signupService,
+} from "../service/auth.service";
+import { error, success } from "../../../common/utils/returnFunctions";
+
+export const signupHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const payload = req.payload as signupPayload;
+
+    const result = (await signupService(payload)) as any;
+    if (result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
+
+    return success(
+      result.user,
+      "User registered successfully with invitation mail",
+      201
+    )(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
+
+export const loginHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const payload = req.payload as LoginPayload;
+    const result = await loginService(payload, h);
+    if (result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
+
+    return success(result.user, "User logged in successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
+
+export const resetPasswordHandler = async (
+  req: Request,
+  h: ResponseToolkit
+) => {
+  try {
+    const payload = req.payload as ResetPasswordPayload;
+    const result = await resetPasswordService(payload);
+    return success(result, "Password reset successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
+
+export const logoutHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const { userId } = req.auth.credentials as any;
+    const result = await logoutService(userId, h);
+    return success(result, "User logged out successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
