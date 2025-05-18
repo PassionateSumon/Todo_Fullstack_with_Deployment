@@ -26,6 +26,15 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.STRING,
       allowNull: false,
     },
+    otp: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    isOtpVerified: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+    },
     isActive: {
       type: Sequelize.BOOLEAN,
       allowNull: false,

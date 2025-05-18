@@ -1,6 +1,8 @@
 import {
   loginHandler,
   logoutHandler,
+  otpCheckHandler,
+  otpSendHandler,
   resetPasswordHandler,
   signupHandler,
 } from "../controller/auth.controller";
@@ -22,7 +24,7 @@ export default [
           name: Joi.string().required(),
           email: Joi.string().email().required(),
           password: Joi.string().required(),
-          user_type: Joi.string().required(),
+          user_type: Joi.string().optional(),
         }),
       },
       payload: {
@@ -43,6 +45,45 @@ export default [
         payload: Joi.object({
           emailOrUsername: Joi.string().required(),
           password: Joi.string().required(),
+        }),
+      },
+      payload: {
+        parse: true,
+        output: "data",
+      },
+    },
+  },
+  {
+    method: "POST",
+    path: `${prefix}/otp-send`,
+    handler: otpSendHandler,
+    options: {
+      auth: false,
+      tags: ["api", "auth"],
+      description: "Send OTP",
+      validate: {
+        payload: Joi.object({
+          email: Joi.string().required(),
+        }),
+      },
+      payload: {
+        parse: true,
+        output: "data",
+      },
+    },
+  },
+  {
+    method: "POST",
+    path: `${prefix}/otp-check`,
+    handler: otpCheckHandler,
+    options: {
+      auth: false,
+      tags: ["api", "auth"],
+      description: "OTP verification",
+      validate: {
+        payload: Joi.object({
+          email: Joi.string().required(),
+          otp: Joi.string().required(),
         }),
       },
       payload: {

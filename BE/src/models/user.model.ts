@@ -23,6 +23,15 @@ export default (sequelize: any, DataType: any) => {
         type: DataType.STRING,
         allowNull: false,
       },
+      otp: {
+        type: DataType.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
+      isOtpVerified: {
+        type: DataType.BOOLEAN,
+        allowNull: false,
+      },
       isActive: {
         type: DataType.BOOLEAN,
         allowNull: false,

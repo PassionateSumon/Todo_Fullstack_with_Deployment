@@ -3,7 +3,7 @@ export interface signupPayload {
   email: string;
   username: string;
   password: string;
-  user_type: "admin" | "user";
+  user_type?: "admin" | "user";
 }
 
 export interface LoginPayload {

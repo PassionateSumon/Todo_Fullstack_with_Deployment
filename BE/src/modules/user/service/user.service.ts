@@ -1,9 +1,14 @@
 import { db } from "config/db";
 
-export const getAllUsersService = async () => {
+export const getAllUsersService = async (userId: number) => {
   try {
     const users = await db.User.findAll({
       attributes: { exclude: ["password"] },
+      where: {
+        id: {
+          [db.Sequelize.Op.ne]: userId,
+        },
+      },
     });
     if (!users) {
       return {

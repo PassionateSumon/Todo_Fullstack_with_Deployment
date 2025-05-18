@@ -1,12 +1,10 @@
 import { ResponseToolkit } from "@hapi/hapi";
-import { statusCodes } from "../../../common/constants/constants";
 import {
   LoginPayload,
   ResetPasswordPayload,
   signupPayload,
 } from "../../../common/interfaces/User.interface";
 import { CryptoUtil } from "../../../common/utils/Crypto";
-import { error } from "../../../common/utils/returnFunctions";
 import { db } from "../../../config/db";
 import { queueEmail } from "./emailQueue.service";
 import { JWTUtil } from "common/utils/JWTUtils";
@@ -24,6 +22,18 @@ const sendInviteEmail = async (user: any, tempPassword: string) => {
     to: user.email,
     subject: "Invitation to Join School",
     text: emailContent,
+  });
+};
+
+// send otp email
+const sendOTPEmail = async (email: string, otp: string) => {
+  const otpContent = `
+    OTP: ${otp}
+  `;
+  await queueEmail({
+    to: email,
+    subject: "OTP for verification",
+    text: otpContent,
   });
 };
 
@@ -45,6 +55,10 @@ export const signupService = async ({
     const hashedPassword = CryptoUtil.hashPassword(password, "10");
     const username = Math.floor(Math.random() * 1000000).toString();
 
+    if (!user_type) {
+      user_type = "admin";
+    }
+
     const newUser = await db.User.create({
       name,
       email,
@@ -53,6 +67,7 @@ export const signupService = async ({
       isActive: true,
       user_type,
       is_reset_password: false,
+      isOtpVerified: false,
     });
 
     if (!newUser) {
@@ -182,6 +197,7 @@ export const loginService = async (
         username: isExistUser.username,
         user_type: isExistUser.user_type,
         isActive: isExistUser.isActive,
+        isOtpVerified: isExistUser.isOtpVerified,
         accessToken,
         refreshToken,
       },
@@ -194,6 +210,83 @@ export const loginService = async (
   }
 };
 
+export const otpSendService = async (email: string) => {
+  try {
+    const otpValue = Math.floor(Math.random() * 1000 + 1000);
+    const user = await db.User.findOne({ where: { email } });
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: "User not found",
+      };
+    }
+    await db.User.update({ otp: otpValue.toString() }, { where: { email } });
+
+    try {
+      await sendOTPEmail(email, otpValue.toString());
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: "Failed to send OTP email",
+      };
+    }
+
+    return {
+      statusCode: 200,
+      message: "OTP sent successfully",
+      data: {},
+    };
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      message: err.message || "Internal server error",
+    };
+  }
+};
+
+export const otpCheckService = async (email: string, otp: string) => {
+  try {
+    const user = await db.User.findOne({
+      where: { email },
+      attributes: { exclude: ["password"] },
+    });
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: "User not found",
+      };
+    }
+
+    if (user.otp !== otp) {
+      return {
+        statusCode: 400,
+        message: "Invalid OTP",
+      };
+    }
+
+    await db.User.update(
+      { isOtpVerified: true, otp: null },
+      { where: { email } }
+    );
+    const updatedUser = await db.User.findOne({
+      where: { email },
+      attributes: { exclude: ["password"] },
+    });
+
+    return {
+      statusCode: 200,
+      message: "OTP verified successfully",
+      data: {
+        user: updatedUser,
+      },
+    };
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      message: err.message || "Internal server error",
+    };
+  }
+};
 export const resetPasswordService = async ({
   emailOrUsername,
   tempPassword,
@@ -263,6 +356,20 @@ export const resetPasswordService = async ({
 
 export const logoutService = async (userId: string, h: ResponseToolkit) => {
   try {
+    const user = await db.User.findByPk(userId);
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: "User not found",
+      };
+    }
+    if (!user.isOtpVerified) {
+      return {
+        statusCode: 400,
+        message: "User is not verified through OTP verification",
+      };
+    }
+
     const deletedCount = await db.RefreshToken.destroy({
       where: {
         userId,

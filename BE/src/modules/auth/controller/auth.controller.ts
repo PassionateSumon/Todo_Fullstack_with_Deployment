@@ -7,6 +7,8 @@ import {
 import {
   loginService,
   logoutService,
+  otpCheckService,
+  otpSendService,
   resetPasswordService,
   signupService,
 } from "../service/auth.service";
@@ -43,6 +45,37 @@ export const loginHandler = async (req: Request, h: ResponseToolkit) => {
   }
 };
 
+export const otpSendHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const { email } = req.payload as {
+      email: string;
+    };
+    const result = await otpSendService(email) as any;
+    if (result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
+
+    return success(result.data, "Otp sent successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
+
+export const otpCheckHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const { email, otp } = req.payload as {
+      email: string;
+      otp: string;
+    };
+    const result = await otpCheckService(email, otp);
+    if (result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
+
+    return success(result.data, "Otp verified successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+}
+
 export const resetPasswordHandler = async (
   req: Request,
   h: ResponseToolkit
@@ -60,6 +93,8 @@ export const logoutHandler = async (req: Request, h: ResponseToolkit) => {
   try {
     const { userId } = req.auth.credentials as any;
     const result = await logoutService(userId, h);
+    if(result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
     return success(result, "User logged out successfully", 200)(h);
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);
