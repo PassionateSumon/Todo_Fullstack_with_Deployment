@@ -1,8 +1,10 @@
 import {
   loginHandler,
   logoutHandler,
+  myHandler,
   otpCheckHandler,
   otpSendHandler,
+  refreshHandler,
   resetPasswordHandler,
   signupHandler,
 } from "../controller/auth.controller";
@@ -111,6 +113,30 @@ export default [
         parse: true,
         output: "data",
       },
+    },
+  },
+  {
+    method: "POST",
+    path: `${prefix}/refresh`,
+    handler: refreshHandler,
+    options: {
+      auth: false,
+      tags: ["api", "auth"],
+      description: "User refresh token",
+      payload: {
+        parse: true,
+        output: "data",
+      },
+    },
+  },
+  {
+    method: "GET",
+    path: `${prefix}/me`,
+    handler: myHandler,
+    options: {
+      auth: "jwt_access",
+      tags: ["api", "auth"],
+      description: "Get user details",
     },
   },
   {

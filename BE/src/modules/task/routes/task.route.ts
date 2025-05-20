@@ -23,6 +23,9 @@ export default [
           name: Joi.string().required(),
           description: Joi.string().optional(),
           status: Joi.string().required(),
+          priority: Joi.string().optional(),
+          start_date: Joi.string().optional(),
+          end_date: Joi.string().optional(),
         }),
       },
       payload: {
@@ -33,7 +36,7 @@ export default [
   },
   {
     method: "GET",
-    path: `${prefix}/all`,
+    path: `${prefix}/all/{viewType}`,
     handler: getAllTaskHandler,
     options: {
       auth: "jwt_access",
@@ -74,7 +77,7 @@ export default [
   },
   {
     method: "DELETE",
-    path: `${prefix}/delete/:id`,
+    path: `${prefix}/delete/{id}`,
     handler: deleteTaskHandler,
     options: {
       auth: "jwt_access",

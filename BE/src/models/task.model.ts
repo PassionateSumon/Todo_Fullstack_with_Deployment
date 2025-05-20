@@ -23,6 +23,21 @@ export default (sequelize: any, DataType: any) => {
         type: DataType.INTEGER,
         allowNull: false,
       },
+      priority: {
+        type: DataType.STRING,
+        allowNull: true,
+        validate: {
+          isIn: [["high", "medium", "low", null]],
+        },
+      },
+      start_date: {
+        type: DataType.DATE,
+        allowNull: true,
+      },
+      end_date: {
+        type: DataType.DATE,
+        allowNull: true,
+      },
     },
     { tableName: "Task", timestamps: true }
   );

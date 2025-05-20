@@ -198,8 +198,6 @@ export const loginService = async (
         user_type: isExistUser.user_type,
         isActive: isExistUser.isActive,
         isOtpVerified: isExistUser.isOtpVerified,
-        accessToken,
-        refreshToken,
       },
     };
   } catch (err: any) {
@@ -287,6 +285,90 @@ export const otpCheckService = async (email: string, otp: string) => {
     };
   }
 };
+
+export const refreshService = async (
+  refreshToken: string,
+  h: ResponseToolkit
+) => {
+  try {
+    if (!refreshToken) {
+      return {
+        statusCode: 401,
+        message: "Refresh token not found",
+      };
+    }
+
+    // Validate refreshToken in the database
+    const tokenRecord = await db.RefreshToken.findOne({
+      where: { token: refreshToken },
+      include: [{ model: db.User, as: "user" }],
+    });
+
+    if (!tokenRecord || !tokenRecord.user) {
+      return {
+        statusCode: 401,
+        message: "Invalid or expired refresh token",
+      };
+    }
+
+    // Verify user is active
+    if (!tokenRecord.user.isActive) {
+      return {
+        statusCode: 403,
+        message: "User is inactive",
+      };
+    }
+
+    // Generate new tokens
+    const newAccessToken = JWTUtil.generateAccessToken(
+      tokenRecord.user.id,
+      tokenRecord.user.user_type
+    );
+    const newRefreshToken = JWTUtil.generateRefreshToken(
+      tokenRecord.user.id,
+      tokenRecord.user.user_type
+    );
+
+    // Update the RefreshToken table
+    try {
+      await db.RefreshToken.update(
+        { token: newRefreshToken },
+        { where: { token: refreshToken } }
+      );
+    } catch (err: any) {
+      console.log(err);
+      return {
+        statusCode: 500,
+        message: "Internal server error for updating refresh token",
+      };
+    }
+
+    // Set new HTTP-only cookies
+    h.state("accessToken", newAccessToken, {
+      path: "/",
+      isHttpOnly: true,
+      ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+    });
+    h.state("refreshToken", newRefreshToken, {
+      path: "/",
+      isHttpOnly: true,
+      ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return {
+      statusCode: 200,
+      message: "Tokens refreshed successfully",
+      data: {},
+    };
+  } catch (err: any) {
+    console.log(err);
+    return {
+      statusCode: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
 export const resetPasswordService = async ({
   emailOrUsername,
   tempPassword,
@@ -344,6 +426,45 @@ export const resetPasswordService = async ({
         username: isExistUser.username,
         user_type: isExistUser.user_type,
         isActive: isExistUser.isActive,
+      },
+    };
+  } catch (err: any) {
+    return {
+      statusCode: 500,
+      message: err.message || "Internal server error",
+    };
+  }
+};
+
+export const myService = async (userId: string) => {
+  try {
+    const user = await db.User.findByPk(userId);
+    if (!user) {
+      return {
+        statusCode: 404,
+        message: "User not found",
+      };
+    }
+    if(!user.isOtpVerified) {
+      return {
+        statusCode: 400,
+        message: "User is not verified through OTP verification",
+      }
+    }
+
+    return {
+      statusCode: 200,
+      message: "User fetched successfully",
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          user_type: user.user_type,
+          isActive: user.isActive,
+          isOtpVerified: user.isOtpVerified,
+        },
       },
     };
   } catch (err: any) {

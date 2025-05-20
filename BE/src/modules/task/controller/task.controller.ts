@@ -15,10 +15,15 @@ export const createTaskHandler = async (req: Request, h: ResponseToolkit) => {
       name: string;
       description?: string;
       status: string;
+      priority?: "high" | "medium" | "low";
+      start_date?: string;
+      end_date?: string;
     };
+    // console.log(payload)
     const result = await createTaskService(payload, userId);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
+    // console.log("here clear");
     return success(result.data, "Task created successfully", 200)(h);
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);
@@ -27,10 +32,12 @@ export const createTaskHandler = async (req: Request, h: ResponseToolkit) => {
 
 export const getAllTaskHandler = async (req: Request, h: ResponseToolkit) => {
   try {
-    const viewType = req.params.viewType as "kanban" | "compact";
+    const viewType = req.params.viewType as "kanban" | "compact" | "calendar";
+    // console.log("controller viewType: --> ",viewType)
     const result = await getAllTaskService(viewType);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
+    // console.log("res ---> ", result.data); 
     return success(result.data, "Tasks fetched successfully", 200)(h);
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);

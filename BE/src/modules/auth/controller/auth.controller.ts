@@ -7,8 +7,10 @@ import {
 import {
   loginService,
   logoutService,
+  myService,
   otpCheckService,
   otpSendService,
+  refreshService,
   resetPasswordService,
   signupService,
 } from "../service/auth.service";
@@ -50,7 +52,7 @@ export const otpSendHandler = async (req: Request, h: ResponseToolkit) => {
     const { email } = req.payload as {
       email: string;
     };
-    const result = await otpSendService(email) as any;
+    const result = (await otpSendService(email)) as any;
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
 
@@ -74,7 +76,19 @@ export const otpCheckHandler = async (req: Request, h: ResponseToolkit) => {
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);
   }
-}
+};
+
+export const refreshHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const refreshToken = req.state.refreshToken;
+    const res = await refreshService(refreshToken, h);
+    if (res.statusCode !== 200 && res.statusCode !== 201)
+      return error(null, res.message, res.statusCode)(h);
+    return success(res.data, "Token refreshed successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
 
 export const resetPasswordHandler = async (
   req: Request,
@@ -89,11 +103,23 @@ export const resetPasswordHandler = async (
   }
 };
 
+export const myHandler = async (req: Request, h: ResponseToolkit) => {
+  try {
+    const { userId } = req.auth.credentials as any;
+    const result = await myService(userId);
+    if (result.statusCode !== 200 && result.statusCode !== 201)
+      return error(null, result.message, result.statusCode)(h);
+    return success(result.data, "User authenticated successfully", 200)(h);
+  } catch (err: any) {
+    return error(null, err.message || "Internal server error", 500)(h);
+  }
+};
+
 export const logoutHandler = async (req: Request, h: ResponseToolkit) => {
   try {
     const { userId } = req.auth.credentials as any;
     const result = await logoutService(userId, h);
-    if(result.statusCode !== 200 && result.statusCode !== 201)
+    if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
     return success(result, "User logged out successfully", 200)(h);
   } catch (err: any) {

@@ -32,7 +32,7 @@ export default (sequelize: any, DataType: any) => {
   );
 
   RefreshToken.associate = (models: any) => {
-    RefreshToken.belongsTo(models.User, { foreignKey: "userId" });
+    RefreshToken.belongsTo(models.User, { foreignKey: "userId", as : "user" });
   };
 
   return RefreshToken;

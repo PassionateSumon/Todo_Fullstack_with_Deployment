@@ -25,6 +25,21 @@ export async function up(queryInterface, Sequelize) {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
+    priority: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      validate: {
+        isIn: [["high", "medium", "low", null]],
+      },
+    },
+    start_date: {
+      type: Sequelize.DATE,
+      allowNull: true,
+    },
+    end_date: {
+      type: Sequelize.DATE,
+      allowNull: true,
+    },
     createdAt: {
       type: Sequelize.DATE,
       allowNull: false,
