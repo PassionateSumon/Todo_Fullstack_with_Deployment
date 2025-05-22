@@ -179,7 +179,8 @@ export const loginService = async (
     h.state("accessToken", accessToken, {
       path: "/",
       isHttpOnly: true,
-      ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+      // ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+      ttl: 1 * 60 * 1000, // 1 minute
     });
     h.state("refreshToken", refreshToken, {
       path: "/",

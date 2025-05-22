@@ -1,22 +1,75 @@
-import { useState, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createTask, getAllTasks, updateTask } from "../slices/TaskSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import { toast } from "react-toastify";
-import type { TaskModalProps } from "../types/Task.interface";
+import type { ExtendedTaskModalProps } from "../types/Task.interface";
 
-const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
+const TaskModal = ({
+  isOpen,
+  onClose,
+  mode,
+  task,
+  statuses,
+  activeView,
+}: ExtendedTaskModalProps) => {
   const [formData, setFormData] = useState({
-    name: task?.task_name || "",
-    description: task?.task_description || "",
-    status: task?.status?.name || "",
-    priority: task?.priority || "",
-    start_date: task?.start_date || "",
-    end_date: task?.end_date || "",
+    name: "",
+    description: "",
+    status: "",
+    priority: "",
+    start_date: "",
+    end_date: "",
   });
 
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error } = useSelector((state: RootState) => state.task);
+
+  // Ref for the modal to detect outside clicks
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Populate form data when task changes (for Edit/View modes)
+  useEffect(() => {
+    if (task && (mode === "edit" || mode === "view")) {
+      setFormData({
+        name: task.task_name || "",
+        description: task.task_description || "",
+        status: task.status?.name || "",
+        priority: task.priority || "",
+        start_date: task.start_date ? task.start_date.split("T")[0] : "",
+        end_date: task.end_date ? task.end_date.split("T")[0] : "",
+      });
+    } else {
+      setFormData({
+        name: "",
+        description: "",
+        status: "",
+        priority: "",
+        start_date: "",
+        end_date: "",
+      });
+    }
+  }, [task, mode]);
+
+  // Handle click outside to close the modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        handleOnClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Handle input change
   const handleChange = (
@@ -27,6 +80,22 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  // Map activeView to viewType
+  const getViewType = () => {
+    switch (activeView) {
+      case "kanban":
+        return "kanban";
+      case "collapsed":
+        return "compact";
+      case "calendar":
+        return "calendar";
+      case "table":
+        return "table";
+      default:
+        return "kanban";
+    }
   };
 
   // Handle form submission
@@ -52,8 +121,6 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
       end_date: formData.end_date || undefined,
     };
 
-    // console.log(payload)
-
     if (mode === "add") {
       const result = await dispatch(createTask(payload));
       if (createTask.fulfilled.match(result)) {
@@ -61,8 +128,9 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
           toastId: "task-create-success",
         });
         onClose();
-        dispatch(getAllTasks("kanban"));
+        dispatch(getAllTasks(getViewType())); // Use dynamic viewType
       }
+
       setFormData({
         name: "",
         description: "",
@@ -78,6 +146,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
           toastId: "task-update-success",
         });
         onClose();
+        dispatch(getAllTasks(getViewType())); // Use dynamic viewType
       }
     }
   };
@@ -106,17 +175,14 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* Blurred Background with Plain CSS */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backdropFilter: "blur(1px)", // Direct CSS for reliable blur effect
-        }}
-      ></div>
+      {/* Blurred Background */}
+      <div className="absolute inset-0 backdrop-blur-sm"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-[#FFFFFF] rounded-xl w-[600px] max-w-[90vw] p-4 z-10">
+      <div
+        ref={modalRef}
+        className="relative bg-[#FFFFFF] rounded-xl w-[600px] max-w-[90vw] p-4 z-10 shadow-lg"
+      >
         {/* Cross Button (Top-Right) */}
         <button
           onClick={handleOnClose}
@@ -145,7 +211,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
               value={formData.name}
               onChange={handleChange}
               disabled={isViewMode}
-              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors"
+              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
               aria-label="Task Name"
             />
           </div>
@@ -164,13 +230,15 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
               value={formData.status}
               onChange={handleChange}
               disabled={isViewMode}
-              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF]"
+              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF] disabled:bg-[#F9FAFB]"
               aria-label="Task Status"
             >
               <option value="">Select Status</option>
-              <option value="To Do">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -188,7 +256,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
               value={formData.priority}
               onChange={handleChange}
               disabled={isViewMode}
-              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF]"
+              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF] disabled:bg-[#F9FAFB]"
               aria-label="Task Priority"
             >
               <option value="">Select Priority</option>
@@ -213,7 +281,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
               value={formData.start_date}
               onChange={handleChange}
               disabled={isViewMode}
-              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors"
+              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
               aria-label="Start Date"
             />
           </div>
@@ -233,7 +301,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
               value={formData.end_date}
               onChange={handleChange}
               disabled={isViewMode}
-              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors"
+              className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
               aria-label="End Date"
             />
           </div>
@@ -253,7 +321,7 @@ const TaskModal = ({ isOpen, onClose, mode, task }: TaskModalProps) => {
             value={formData.description}
             onChange={handleChange}
             disabled={isViewMode}
-            className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors resize-none h-[60px]"
+            className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors resize-none h-[60px] disabled:bg-[#F9FAFB]"
             aria-label="Task Description"
           />
         </div>

@@ -1,1184 +1,33 @@
-// import { useState, useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { getAllTasks } from "../slices/TaskSlice";
-// import type { AppDispatch, RootState } from "../../../store/store";
-// import TaskModal from "../components/TaskModal";
-
-// const TaskPage = () => {
-//   const dispatch = useDispatch<AppDispatch>();
-//   const { tasks, loading, error } = useSelector(
-//     (state: RootState) => state.task
-//   );
-
-//   const [modalState, setModalState] = useState<{
-//     isOpen: boolean;
-//     mode: "add" | "view" | "edit";
-//     task: any | null;
-//   }>({
-//     isOpen: false,
-//     mode: "add",
-//     task: null,
-//   });
-
-//   const [activeView, setActiveView] = useState<
-//     "kanban" | "collapsed" | "calendar"
-//   >("kanban");
-
-//   // Fetch tasks based on the selected view
-//   useEffect(() => {
-//     let viewType: "kanban" | "calendar" | "compact";
-//     switch (activeView) {
-//       case "kanban":
-//         viewType = "kanban";
-//         break;
-//       case "collapsed":
-//         viewType = "compact";
-//         break;
-//       case "calendar":
-//         viewType = "calendar";
-//         break;
-//       default:
-//         viewType = "kanban";
-//     }
-//     dispatch(getAllTasks(viewType));
-//   }, [activeView, dispatch]);
-
-//   const handleOpenModal = (
-//     mode: "add" | "view" | "edit",
-//     task: any | null = null
-//   ) => {
-//     setModalState({ isOpen: true, mode, task });
-//   };
-
-//   const handleCloseModal = () => {
-//     setModalState({ isOpen: false, mode: "add", task: null });
-//   };
-
-//   // For Kanban view: tasks is already grouped by status
-//   const kanbanColumns =
-//     activeView === "kanban" && !Array.isArray(tasks) ? tasks : {};
-
-//   // Flatten tasks for Collapsed and Calendar views
-//   const flattenedTasks =
-//     activeView !== "kanban" && !Array.isArray(tasks)
-//       ? Object.values(tasks).flat()
-//       : Array.isArray(tasks)
-//       ? tasks
-//       : [];
-
-//   // Calendar view: Group tasks by start_date
-//   const calendarTasks = flattenedTasks.reduce((acc: any, task: any) => {
-//     const date = task.start_date?.split("T")[0] || "No Date";
-//     if (!acc[date]) acc[date] = [];
-//     acc[date].push(task);
-//     return acc;
-//   }, {});
-
-//   return (
-//     <div className="min-h-screen bg-[#F3F4FE] p-8">
-//       {/* Header Section */}
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-[#2D3748] text-2xl font-semibold">
-//           Task Management
-//         </h1>
-//         <button
-//           onClick={() => handleOpenModal("add")}
-//           className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-//         >
-//           <span>+</span> Add Task
-//         </button>
-//       </div>
-
-//       {/* View Tabs */}
-//       <div className="flex gap-4 mb-6 border-b border-[#CBD5E0]">
-//         <button
-//           onClick={() => setActiveView("kanban")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "kanban"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Kanban
-//         </button>
-//         <button
-//           onClick={() => setActiveView("collapsed")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "collapsed"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Collapsed
-//         </button>
-//         <button
-//           onClick={() => setActiveView("calendar")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "calendar"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Calendar
-//         </button>
-//       </div>
-
-//       {/* Loading and Error States */}
-//       {loading && (
-//         <p className="text-[#2D3748] text-center text-sm">Loading tasks...</p>
-//       )}
-//       {error && <p className="text-[#E53E3E] text-center text-sm">{error}</p>}
-
-//       {/* Kanban View */}
-//       {activeView === "kanban" && !loading && !error && (
-//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-//           {Object.keys(kanbanColumns).length === 0 ? (
-//             <p className="text-[#2D3748] text-center text-sm opacity-70">
-//               No statuses available. Add a task to get started.
-//             </p>
-//           ) : (
-//             (Object.entries(kanbanColumns) as [string, any[]][]).map(
-//               ([status, tasks]) => (
-//                 <div
-//                   key={status}
-//                   className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]"
-//                 >
-//                   <h2 className="text-[#2D3748] text-lg font-semibold mb-3">
-//                     {status}
-//                   </h2>
-//                   {tasks.length === 0 ? (
-//                     <p className="text-[#2D3748] text-sm opacity-70">
-//                       No tasks in this status.
-//                     </p>
-//                   ) : (
-//                     tasks.map((task: any) => (
-//                       <div
-//                         key={task?.id || Math.random()}
-//                         className="bg-[#F9FAFB] rounded-md p-3 mb-2 border-l-4 border-[#5A67D8] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                         onClick={() => handleOpenModal("view", task)}
-//                       >
-//                         <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                           {task?.task_name || "Unnamed Task"}
-//                         </h3>
-//                         <div className="flex justify-between items-center">
-//                           <span
-//                             className={`text-xs px-2 py-1 rounded-full ${
-//                               task?.priority === "high"
-//                                 ? "bg-[#E53E3E] text-white"
-//                                 : task?.priority === "medium"
-//                                 ? "bg-[#F6E05E] text-[#2D3748]"
-//                                 : task?.priority === "low"
-//                                 ? "bg-[#68D391] text-white"
-//                                 : "bg-[#CBD5E0] text-[#2D3748]"
-//                             }`}
-//                           >
-//                             {task?.priority
-//                               ? task.priority.charAt(0).toUpperCase() +
-//                                 task.priority.slice(1)
-//                               : "No Priority"}
-//                           </span>
-//                           <span className="text-[#2D3748] text-xs opacity-70">
-//                             {task?.start_date?.split("T")[0] || "No Date"}
-//                           </span>
-//                         </div>
-//                       </div>
-//                     ))
-//                   )}
-//                 </div>
-//               )
-//             )
-//           )}
-//         </div>
-//       )}
-
-//       {/* Collapsed View */}
-//       {activeView === "collapsed" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">Tasks</h2>
-//           {flattenedTasks.length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks available.
-//             </p>
-//           ) : (
-//             <div className="space-y-2">
-//               {flattenedTasks.map((task: any) => (
-//                 <div
-//                   key={task?.id || Math.random()}
-//                   className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                   onClick={() => handleOpenModal("view", task)}
-//                 >
-//                   <div className="flex-1">
-//                     <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                       {task?.task_name || "Unnamed Task"}
-//                     </h3>
-//                     <div className="flex gap-2">
-//                       <span className="text-[#2D3748] text-xs opacity-70">
-//                         {task?.status?.name || "No Status"}
-//                       </span>
-//                       <span
-//                         className={`text-xs px-2 py-1 rounded-full ${
-//                           task?.priority === "high"
-//                             ? "bg-[#E53E3E] text-white"
-//                             : task?.priority === "medium"
-//                             ? "bg-[#F6E05E] text-[#2D3748]"
-//                             : task?.priority === "low"
-//                             ? "bg-[#68D391] text-white"
-//                             : "bg-[#CBD5E0] text-[#2D3748]"
-//                         }`}
-//                       >
-//                         {task?.priority
-//                           ? task.priority.charAt(0).toUpperCase() +
-//                             task.priority.slice(1)
-//                           : "No Priority"}
-//                       </span>
-//                     </div>
-//                   </div>
-//                   <div className="flex gap-2 items-center">
-//                     <span className="text-[#2D3748] text-xs opacity-70">
-//                       {task?.start_date?.split("T")[0] || "No Date"}
-//                     </span>
-//                     <button
-//                       onClick={(e) => {
-//                         e.stopPropagation();
-//                         handleOpenModal("edit", task);
-//                       }}
-//                       className="text-[#5A67D8] text-xs hover:underline"
-//                     >
-//                       Edit
-//                     </button>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Calendar View */}
-//       {activeView === "calendar" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">
-//             Calendar View
-//           </h2>
-//           {Object.keys(calendarTasks).length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks scheduled.
-//             </p>
-//           ) : (
-//             <div className="space-y-4">
-//               {(Object.entries(calendarTasks) as [string, any[]][]).map(
-//                 ([date, tasks]) => (
-//                   <div key={date}>
-//                     <h3 className="text-[#2D3748] text-sm font-medium mb-2 bg-[#E2E8F0] rounded-md p-2">
-//                       {date}
-//                     </h3>
-//                     <div className="space-y-2">
-//                       {tasks.map((task: any) => (
-//                         <div
-//                           key={task?.id || Math.random()}
-//                           className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                           onClick={() => handleOpenModal("view", task)}
-//                         >
-//                           <div className="flex-1">
-//                             <h4 className="text-[#2D3748] text-sm font-medium mb-1">
-//                               {task?.task_name || "Unnamed Task"}
-//                             </h4>
-//                             <div className="flex gap-2">
-//                               <span className="text-[#2D3748] text-xs opacity-70">
-//                                 {task?.status?.name || "No Status"}
-//                               </span>
-//                               <span
-//                                 className={`text-xs px-2 py-1 rounded-full ${
-//                                   task?.priority === "high"
-//                                     ? "bg-[#E53E3E] text-white"
-//                                     : task?.priority === "medium"
-//                                     ? "bg-[#F6E05E] text-[#2D3748]"
-//                                     : task?.priority === "low"
-//                                     ? "bg-[#68D391] text-white"
-//                                     : "bg-[#CBD5E0] text-[#2D3748]"
-//                                 }`}
-//                               >
-//                                 {task?.priority
-//                                   ? task.priority.charAt(0).toUpperCase() +
-//                                     task.priority.slice(1)
-//                                   : "No Priority"}
-//                               </span>
-//                             </div>
-//                           </div>
-//                           <div className="flex gap-2 items-center">
-//                             <span className="text-[#2D3748] text-xs opacity-70">
-//                               {task?.end_date?.split("T")[0] || "No End Date"}
-//                             </span>
-//                             <button
-//                               onClick={(e) => {
-//                                 e.stopPropagation();
-//                                 handleOpenModal("edit", task);
-//                               }}
-//                               className="text-[#5A67D8] text-xs hover:underline"
-//                             >
-//                               Edit
-//                             </button>
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 )
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Task Modal */}
-//       <TaskModal
-//         isOpen={modalState.isOpen}
-//         onClose={handleCloseModal}
-//         mode={modalState.mode}
-//         task={modalState.task}
-//       />
-//     </div>
-//   );
-// };
-
-// export default TaskPage;
-
-// ****************************************************************
-
-// import { useState, useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { getAllTasks } from "../slices/TaskSlice";
-// import type { AppDispatch, RootState } from "../../../store/store";
-// import TaskModal from "../components/TaskModal";
-
-// const TaskPage = () => {
-//   const dispatch = useDispatch<AppDispatch>();
-//   const { tasks, loading, error } = useSelector(
-//     (state: RootState) => state.task
-//   );
-
-//   const [modalState, setModalState] = useState<{
-//     isOpen: boolean;
-//     mode: "add" | "view" | "edit";
-//     task: any | null;
-//   }>({
-//     isOpen: false,
-//     mode: "add",
-//     task: null,
-//   });
-
-//   const [activeView, setActiveView] = useState<
-//     "kanban" | "collapsed" | "calendar"
-//   >("kanban");
-
-//   // State for Collapsed view accordion (which statuses are expanded)
-//   const [expandedStatuses, setExpandedStatuses] = useState<{
-//     [key: string]: boolean;
-//   }>({});
-
-//   // Fetch tasks based on the selected view
-//   useEffect(() => {
-//     let viewType: "kanban" | "calendar" | "compact";
-//     switch (activeView) {
-//       case "kanban":
-//         viewType = "kanban";
-//         break;
-//       case "collapsed":
-//         viewType = "compact";
-//         break;
-//       case "calendar":
-//         viewType = "calendar";
-//         break;
-//       default:
-//         viewType = "kanban";
-//     }
-//     dispatch(getAllTasks(viewType));
-//   }, [activeView, dispatch]);
-
-//   const handleOpenModal = (
-//     mode: "add" | "view" | "edit",
-//     task: any | null = null
-//   ) => {
-//     setModalState({ isOpen: true, mode, task });
-//   };
-
-//   const handleCloseModal = () => {
-//     setModalState({ isOpen: false, mode: "add", task: null });
-//   };
-
-//   // Toggle expanded state for a status in Collapsed view
-//   const toggleStatus = (status: string) => {
-//     setExpandedStatuses((prev) => ({
-//       ...prev,
-//       [status]: !prev[status],
-//     }));
-//   };
-
-//   // For Kanban view: tasks is already grouped by status
-//   const kanbanColumns =
-//     activeView === "kanban" && !Array.isArray(tasks) ? tasks : {};
-
-//   // Flatten tasks for Collapsed and Calendar views
-//   const flattenedTasks =
-//     activeView !== "kanban" && !Array.isArray(tasks)
-//       ? Object.values(tasks).flat()
-//       : Array.isArray(tasks)
-//       ? tasks
-//       : [];
-
-//   // Group tasks by status for Collapsed view (FAQ style)
-//   const collapsedColumns = flattenedTasks.reduce((acc: any, task: any) => {
-//     const status = task.status?.name || "No Status";
-//     if (!acc[status]) acc[status] = [];
-//     acc[status].push(task);
-//     return acc;
-//   }, {});
-
-//   // Calendar view: Group tasks by start_date
-//   const calendarTasks = flattenedTasks.reduce((acc: any, task: any) => {
-//     const date = task.start_date?.split("T")[0] || "No Date";
-//     if (!acc[date]) acc[date] = [];
-//     acc[date].push(task);
-//     return acc;
-//   }, {});
-
-//   return (
-//     <div className="min-h-screen bg-[#F3F4FE] p-8">
-//       {/* Header Section */}
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-[#2D3748] text-2xl font-semibold">
-//           Task Management
-//         </h1>
-//         <button
-//           onClick={() => handleOpenModal("add")}
-//           className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-//         >
-//           <span>+</span> Add Task
-//         </button>
-//       </div>
-
-//       {/* View Tabs */}
-//       <div className="flex gap-4 mb-6 border-b border-[#CBD5E0]">
-//         <button
-//           onClick={() => setActiveView("kanban")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "kanban"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Kanban
-//         </button>
-//         <button
-//           onClick={() => setActiveView("collapsed")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "collapsed"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Collapsed
-//         </button>
-//         <button
-//           onClick={() => setActiveView("calendar")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "calendar"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Calendar
-//         </button>
-//       </div>
-
-//       {/* Loading and Error States */}
-//       {loading && (
-//         <p className="text-[#2D3748] text-center text-sm">Loading tasks...</p>
-//       )}
-//       {error && <p className="text-[#E53E3E] text-center text-sm">{error}</p>}
-
-//       {/* Kanban View */}
-//       {activeView === "kanban" && !loading && !error && (
-//         <div className="flex flex-col sm:flex-row gap-4 overflow-x-auto pb-4">
-//           {Object.keys(kanbanColumns).length === 0 ? (
-//             <p className="text-[#2D3748] text-center text-sm opacity-70">
-//               No statuses available. Add a task to get started.
-//             </p>
-//           ) : (
-//             (Object.entries(kanbanColumns) as [string, any[]][]).map(
-//               ([status, tasks]) => (
-//                 <div
-//                   key={status}
-//                   className="flex-1 min-w-[250px] max-w-[300px]"
-//                 >
-//                   <h2 className="text-[#2D3748] text-lg font-semibold mb-3 px-2">
-//                     {status}
-//                   </h2>
-//                   <div className="space-y-3">
-//                     {tasks.length === 0 ? (
-//                       <p className="text-[#2D3748] text-sm opacity-70 px-2">
-//                         No tasks in this status.
-//                       </p>
-//                     ) : (
-//                       tasks.map((task: any) => (
-//                         <div
-//                           key={task?.id || Math.random()}
-//                           className="bg-[#FFFFFF] rounded-md p-3 border border-[#CBD5E0] shadow-sm hover:shadow-md transition-all cursor-pointer"
-//                           onClick={() => handleOpenModal("view", task)}
-//                         >
-//                           <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                             {task?.task_name || "Unnamed Task"}
-//                           </h3>
-//                           <div className="flex justify-between items-center">
-//                             <span
-//                               className={`text-xs px-2 py-1 rounded-full ${
-//                                 task?.priority === "high"
-//                                   ? "bg-[#E53E3E] text-white"
-//                                   : task?.priority === "medium"
-//                                   ? "bg-[#F6E05E] text-[#2D3748]"
-//                                   : task?.priority === "low"
-//                                   ? "bg-[#68D391] text-white"
-//                                   : "bg-[#CBD5E0] text-[#2D3748]"
-//                               }`}
-//                             >
-//                               {task?.priority
-//                                 ? task.priority.charAt(0).toUpperCase() +
-//                                   task.priority.slice(1)
-//                                 : "No Priority"}
-//                             </span>
-//                             <span className="text-[#2D3748] text-xs opacity-70">
-//                               {task?.start_date?.split("T")[0] || "No Date"}
-//                             </span>
-//                           </div>
-//                         </div>
-//                       ))
-//                     )}
-//                   </div>
-//                 </div>
-//               )
-//             )
-//           )}
-//         </div>
-//       )}
-
-//       {/* Collapsed View */}
-//       {activeView === "collapsed" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">Tasks</h2>
-//           {Object.keys(collapsedColumns).length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks available.
-//             </p>
-//           ) : (
-//             <div className="space-y-2">
-//               {(Object.entries(collapsedColumns) as [string, any[]][]).map(
-//                 ([status, tasks]) => (
-//                   <div
-//                     key={status}
-//                     className="border-b border-[#CBD5E0] last:border-b-0"
-//                   >
-//                     <button
-//                       onClick={() => toggleStatus(status)}
-//                       className="w-full flex justify-between items-center py-3 px-2 text-left focus:outline-none"
-//                     >
-//                       <h3 className="text-[#2D3748] text-sm font-medium">
-//                         {status}
-//                       </h3>
-//                       <span
-//                         className={`text-[#2D3748] transform transition-transform duration-200 ${
-//                           expandedStatuses[status] ? "rotate-180" : "rotate-0"
-//                         }`}
-//                       >
-//                         ▼
-//                       </span>
-//                     </button>
-//                     {expandedStatuses[status] && (
-//                       <div className="space-y-2 pb-3 px-2">
-//                         {tasks.map((task: any) => (
-//                           <div
-//                             key={task?.id || Math.random()}
-//                             className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                             onClick={() => handleOpenModal("view", task)}
-//                           >
-//                             <div className="flex-1">
-//                               <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                                 {task?.task_name || "Unnamed Task"}
-//                               </h3>
-//                               <div className="flex gap-2">
-//                                 <span className="text-[#2D3748] text-xs opacity-70">
-//                                   {task?.status?.name || "No Status"}
-//                                 </span>
-//                                 <span
-//                                   className={`text-xs px-2 py-1 rounded-full ${
-//                                     task?.priority === "high"
-//                                       ? "bg-[#E53E3E] text-white"
-//                                       : task?.priority === "medium"
-//                                       ? "bg-[#F6E05E] text-[#2D3748]"
-//                                       : task?.priority === "low"
-//                                       ? "bg-[#68D391] text-white"
-//                                       : "bg-[#CBD5E0] text-[#2D3748]"
-//                                   }`}
-//                                 >
-//                                   {task?.priority
-//                                     ? task.priority.charAt(0).toUpperCase() +
-//                                       task.priority.slice(1)
-//                                     : "No Priority"}
-//                                 </span>
-//                               </div>
-//                             </div>
-//                             <div className="flex gap-2 items-center">
-//                               <span className="text-[#2D3748] text-xs opacity-70">
-//                                 {task?.start_date?.split("T")[0] || "No Date"}
-//                               </span>
-//                               <button
-//                                 onClick={(e) => {
-//                                   e.stopPropagation();
-//                                   handleOpenModal("edit", task);
-//                                 }}
-//                                 className="text-[#5A67D8] text-xs hover:underline"
-//                               >
-//                                 Edit
-//                               </button>
-//                             </div>
-//                           </div>
-//                         ))}
-//                       </div>
-//                     )}
-//                   </div>
-//                 )
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Calendar View (Unchanged) */}
-//       {activeView === "calendar" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">
-//             Calendar View
-//           </h2>
-//           {Object.keys(calendarTasks).length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks scheduled.
-//             </p>
-//           ) : (
-//             <div className="space-y-4">
-//               {(Object.entries(calendarTasks) as [string, any[]][]).map(
-//                 ([date, tasks]) => (
-//                   <div key={date}>
-//                     <h3 className="text-[#2D3748] text-sm font-medium mb-2 bg-[#E2E8F0] rounded-md p-2">
-//                       {date}
-//                     </h3>
-//                     <div className="space-y-2">
-//                       {tasks.map((task: any) => (
-//                         <div
-//                           key={task?.id || Math.random()}
-//                           className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                           onClick={() => handleOpenModal("view", task)}
-//                         >
-//                           <div className="flex-1">
-//                             <h4 className="text-[#2D3748] text-sm font-medium mb-1">
-//                               {task?.task_name || "Unnamed Task"}
-//                             </h4>
-//                             <div className="flex gap-2">
-//                               <span className="text-[#2D3748] text-xs opacity-70">
-//                                 {task?.status?.name || "No Status"}
-//                               </span>
-//                               <span
-//                                 className={`text-xs px-2 py-1 rounded-full ${
-//                                   task?.priority === "high"
-//                                     ? "bg-[#E53E3E] text-white"
-//                                     : task?.priority === "medium"
-//                                     ? "bg-[#F6E05E] text-[#2D3748]"
-//                                     : task?.priority === "low"
-//                                     ? "bg-[#68D391] text-white"
-//                                     : "bg-[#CBD5E0] text-[#2D3748]"
-//                                 }`}
-//                               >
-//                                 {task?.priority
-//                                   ? task.priority.charAt(0).toUpperCase() +
-//                                     task.priority.slice(1)
-//                                   : "No Priority"}
-//                               </span>
-//                             </div>
-//                           </div>
-//                           <div className="flex gap-2 items-center">
-//                             <span className="text-[#2D3748] text-xs opacity-70">
-//                               {task?.end_date?.split("T")[0] || "No End Date"}
-//                             </span>
-//                             <button
-//                               onClick={(e) => {
-//                                 e.stopPropagation();
-//                                 handleOpenModal("edit", task);
-//                               }}
-//                               className="text-[#5A67D8] text-xs hover:underline"
-//                             >
-//                               Edit
-//                             </button>
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 )
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Task Modal */}
-//       <TaskModal
-//         isOpen={modalState.isOpen}
-//         onClose={handleCloseModal}
-//         mode={modalState.mode}
-//         task={modalState.task}
-//       />
-//     </div>
-//   );
-// };
-
-// export default TaskPage;
-
-//************************************************************** */
-
-// import { useState, useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { getAllTasks } from "../slices/TaskSlice";
-// import type { AppDispatch, RootState } from "../../../store/store";
-// import TaskModal from "../components/TaskModal";
-
-// const TaskPage = () => {
-//   const dispatch = useDispatch<AppDispatch>();
-//   const { tasks, loading, error } = useSelector(
-//     (state: RootState) => state.task
-//   );
-
-//   const [modalState, setModalState] = useState<{
-//     isOpen: boolean;
-//     mode: "add" | "view" | "edit";
-//     task: any | null;
-//   }>({
-//     isOpen: false,
-//     mode: "add",
-//     task: null,
-//   });
-
-//   const [activeView, setActiveView] = useState<
-//     "kanban" | "collapsed" | "calendar"
-//   >("kanban");
-
-//   // State for Collapsed view accordion (which statuses are expanded)
-//   const [expandedStatuses, setExpandedStatuses] = useState<{
-//     [key: string]: boolean;
-//   }>({});
-
-//   // Fetch tasks based on the selected view
-//   useEffect(() => {
-//     let viewType: "kanban" | "calendar" | "compact";
-//     switch (activeView) {
-//       case "kanban":
-//         viewType = "kanban";
-//         break;
-//       case "collapsed":
-//         viewType = "compact";
-//         break;
-//       case "calendar":
-//         viewType = "calendar";
-//         break;
-//       default:
-//         viewType = "kanban";
-//     }
-//     dispatch(getAllTasks(viewType));
-//   }, [activeView, dispatch]);
-
-//   const handleOpenModal = (
-//     mode: "add" | "view" | "edit",
-//     task: any | null = null
-//   ) => {
-//     setModalState({ isOpen: true, mode, task });
-//   };
-
-//   const handleCloseModal = () => {
-//     setModalState({ isOpen: false, mode: "add", task: null });
-//   };
-
-//   // Toggle expanded state for a status in Collapsed view
-//   const toggleStatus = (status: string) => {
-//     setExpandedStatuses((prev) => ({
-//       ...prev,
-//       [status]: !prev[status],
-//     }));
-//   };
-
-//   // For Kanban view: tasks is already grouped by status
-//   const kanbanColumns =
-//     activeView === "kanban" && !Array.isArray(tasks) ? tasks : {};
-
-//   // Flatten tasks for Collapsed and Calendar views
-//   const flattenedTasks =
-//     activeView !== "kanban" && !Array.isArray(tasks)
-//       ? Object.values(tasks).flat()
-//       : Array.isArray(tasks)
-//       ? tasks
-//       : [];
-
-//   // Group tasks by status for Collapsed view (FAQ style)
-//   const collapsedColumns = flattenedTasks.reduce((acc: any, task: any) => {
-//     const status = task.status?.name || "No Status";
-//     if (!acc[status]) acc[status] = [];
-//     acc[status].push(task);
-//     return acc;
-//   }, {});
-
-//   // Calendar view: Group tasks by start_date
-//   const calendarTasks = flattenedTasks.reduce((acc: any, task: any) => {
-//     const date = task.start_date?.split("T")[0] || "No Date";
-//     if (!acc[date]) acc[date] = [];
-//     acc[date].push(task);
-//     return acc;
-//   }, {});
-
-//   return (
-//     <div className="min-h-screen bg-[#F3F4FE] p-8">
-//       {/* Header Section */}
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-[#2D3748] text-2xl font-semibold">
-//           Task Management
-//         </h1>
-//         <button
-//           onClick={() => handleOpenModal("add")}
-//           className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-//         >
-//           <span>+</span> Add Task
-//         </button>
-//       </div>
-
-//       {/* View Tabs */}
-//       <div className="flex gap-4 mb-6 border-b border-[#CBD5E0]">
-//         <button
-//           onClick={() => setActiveView("kanban")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "kanban"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Kanban
-//         </button>
-//         <button
-//           onClick={() => setActiveView("collapsed")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "collapsed"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Collapsed
-//         </button>
-//         <button
-//           onClick={() => setActiveView("calendar")}
-//           className={`pb-2 text-sm font-medium transition-colors ${
-//             activeView === "calendar"
-//               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-//               : "text-[#2D3748] hover:text-[#5A67D8]"
-//           }`}
-//         >
-//           Calendar
-//         </button>
-//       </div>
-
-//       {/* Loading and Error States */}
-//       {loading && (
-//         <p className="text-[#2D3748] text-center text-sm">Loading tasks...</p>
-//       )}
-//       {error && <p className="text-[#E53E3E] text-center text-sm">{error}</p>}
-
-//       {/* Kanban View */}
-//       {activeView === "kanban" && !loading && !error && (
-//         <div className="flex flex-col sm:flex-row gap-4 overflow-x-auto pb-4">
-//           {Object.keys(kanbanColumns).length === 0 ? (
-//             <p className="text-[#2D3748] text-center text-sm opacity-70">
-//               No statuses available. Add a task to get started.
-//             </p>
-//           ) : (
-//             (Object.entries(kanbanColumns) as [string, any[]][]).map(
-//               ([status, tasks]) => (
-//                 <div
-//                   key={status}
-//                   className="flex-1 min-w-[250px] max-w-[300px]"
-//                 >
-//                   <h2 className="text-[#2D3748] text-lg font-semibold mb-3 px-2">
-//                     {status}
-//                   </h2>
-//                   <div
-//                     className="h-[500px] overflow-y-auto bg-transparent space-y-3 px-2"
-//                     style={{
-//                       scrollbarWidth: "thin",
-//                       scrollbarColor: "#CBD5E0 #F3F4FE",
-//                     }}
-//                   >
-//                     {tasks.length === 0 ? (
-//                       <p className="text-[#2D3748] text-sm opacity-70">
-//                         No tasks in this status.
-//                       </p>
-//                     ) : (
-//                       tasks.map((task: any) => (
-//                         <div
-//                           key={task?.id || Math.random()}
-//                           className="bg-[#FFFFFF] rounded-md p-3 border border-[#CBD5E0] shadow-sm hover:shadow-md transition-all cursor-pointer"
-//                           onClick={() => handleOpenModal("view", task)}
-//                         >
-//                           <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                             {task?.task_name || "Unnamed Task"}
-//                           </h3>
-//                           <div className="flex justify-between items-center">
-//                             <span
-//                               className={`text-xs px-2 py-1 rounded-full ${
-//                                 task?.priority === "high"
-//                                   ? "bg-[#E53E3E] text-white"
-//                                   : task?.priority === "medium"
-//                                   ? "bg-[#F6E05E] text-[#2D3748]"
-//                                   : task?.priority === "low"
-//                                   ? "bg-[#68D391] text-white"
-//                                   : "bg-[#CBD5E0] text-[#2D3748]"
-//                               }`}
-//                             >
-//                               {task?.priority
-//                                 ? task.priority.charAt(0).toUpperCase() +
-//                                   task.priority.slice(1)
-//                                 : "No Priority"}
-//                             </span>
-//                             <span className="text-[#2D3748] text-xs opacity-70">
-//                               {task?.start_date?.split("T")[0] || "No Date"}
-//                             </span>
-//                           </div>
-//                         </div>
-//                       ))
-//                     )}
-//                   </div>
-//                 </div>
-//               )
-//             )
-//           )}
-//         </div>
-//       )}
-
-//       {/* Collapsed View */}
-//       {activeView === "collapsed" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">Tasks</h2>
-//           {Object.keys(collapsedColumns).length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks available.
-//             </p>
-//           ) : (
-//             <div className="space-y-2">
-//               {(Object.entries(collapsedColumns) as [string, any[]][]).map(
-//                 ([status, tasks]) => (
-//                   <div
-//                     key={status}
-//                     className="border-b border-[#CBD5E0] last:border-b-0"
-//                   >
-//                     <button
-//                       onClick={() => toggleStatus(status)}
-//                       className="w-full flex justify-between items-center py-3 px-2 text-left focus:outline-none"
-//                     >
-//                       <h3 className="text-[#2D3748] text-sm font-medium">
-//                         {status}
-//                       </h3>
-//                       <span
-//                         className={`text-[#2D3748] transform transition-transform duration-200 ${
-//                           expandedStatuses[status] ? "rotate-180" : "rotate-0"
-//                         }`}
-//                       >
-//                         ▼
-//                       </span>
-//                     </button>
-//                     {expandedStatuses[status] && (
-//                       <div className="space-y-2 pb-3 px-2">
-//                         {tasks.map((task: any) => (
-//                           <div
-//                             key={task?.id || Math.random()}
-//                             className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                             onClick={() => handleOpenModal("view", task)}
-//                           >
-//                             <div className="flex-1">
-//                               <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-//                                 {task?.task_name || "Unnamed Task"}
-//                               </h3>
-//                               <div className="flex gap-2">
-//                                 <span className="text-[#2D3748] text-xs opacity-70">
-//                                   {task?.status?.name || "No Status"}
-//                                 </span>
-//                                 <span
-//                                   className={`text-xs px-2 py-1 rounded-full ${
-//                                     task?.priority === "high"
-//                                       ? "bg-[#E53E3E] text-white"
-//                                       : task?.priority === "medium"
-//                                       ? "bg-[#F6E05E] text-[#2D3748]"
-//                                       : task?.priority === "low"
-//                                       ? "bg-[#68D391] text-white"
-//                                       : "bg-[#CBD5E0] text-[#2D3748]"
-//                                   }`}
-//                                 >
-//                                   {task?.priority
-//                                     ? task.priority.charAt(0).toUpperCase() +
-//                                       task.priority.slice(1)
-//                                     : "No Priority"}
-//                                 </span>
-//                               </div>
-//                             </div>
-//                             <div className="flex gap-2 items-center">
-//                               <span className="text-[#2D3748] text-xs opacity-70">
-//                                 {task?.start_date?.split("T")[0] || "No Date"}
-//                               </span>
-//                               <button
-//                                 onClick={(e) => {
-//                                   e.stopPropagation();
-//                                   handleOpenModal("edit", task);
-//                                 }}
-//                                 className="text-[#5A67D8] text-xs hover:underline"
-//                               >
-//                                 Edit
-//                               </button>
-//                             </div>
-//                           </div>
-//                         ))}
-//                       </div>
-//                     )}
-//                   </div>
-//                 )
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Calendar View */}
-//       {activeView === "calendar" && !loading && !error && (
-//         <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-//           <h2 className="text-[#2D3748] text-lg font-semibold mb-3">
-//             Calendar View
-//           </h2>
-//           {Object.keys(calendarTasks).length === 0 ? (
-//             <p className="text-[#2D3748] text-sm opacity-70">
-//               No tasks scheduled.
-//             </p>
-//           ) : (
-//             <div className="space-y-4">
-//               {(Object.entries(calendarTasks) as [string, any[]][]).map(
-//                 ([date, tasks]) => (
-//                   <div key={date}>
-//                     <h3 className="text-[#2D3748] text-sm font-medium mb-2 bg-[#E2E8F0] rounded-md p-2">
-//                       {date}
-//                     </h3>
-//                     <div className="space-y-2">
-//                       {tasks.map((task: any) => (
-//                         <div
-//                           key={task?.id || Math.random()}
-//                           className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-//                           onClick={() => handleOpenModal("view", task)}
-//                         >
-//                           <div className="flex-1">
-//                             <h4 className="text-[#2D3748] text-sm font-medium mb-1">
-//                               {task?.task_name || "Unnamed Task"}
-//                             </h4>
-//                             <div className="flex gap-2">
-//                               <span className="text-[#2D3748] text-xs opacity-70">
-//                                 {task?.status?.name || "No Status"}
-//                               </span>
-//                               <span
-//                                 className={`text-xs px-2 py-1 rounded-full ${
-//                                   task?.priority === "high"
-//                                     ? "bg-[#E53E3E] text-white"
-//                                     : task?.priority === "medium"
-//                                     ? "bg-[#F6E05E] text-[#2D3748]"
-//                                     : task?.priority === "low"
-//                                     ? "bg-[#68D391] text-white"
-//                                     : "bg-[#CBD5E0] text-[#2D3748]"
-//                                 }`}
-//                               >
-//                                 {task?.priority
-//                                   ? task.priority.charAt(0).toUpperCase() +
-//                                     task.priority.slice(1)
-//                                   : "No Priority"}
-//                               </span>
-//                             </div>
-//                           </div>
-//                           <div className="flex gap-2 items-center">
-//                             <span className="text-[#2D3748] text-xs opacity-70">
-//                               {task?.end_date?.split("T")[0] || "No End Date"}
-//                             </span>
-//                             <button
-//                               onClick={(e) => {
-//                                 e.stopPropagation();
-//                                 handleOpenModal("edit", task);
-//                               }}
-//                               className="text-[#5A67D8] text-xs hover:underline"
-//                             >
-//                               Edit
-//                             </button>
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 )
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-
-//       {/* Task Modal */}
-//       <TaskModal
-//         isOpen={modalState.isOpen}
-//         onClose={handleCloseModal}
-//         mode={modalState.mode}
-//         task={modalState.task}
-//       />
-//     </div>
-//   );
-// };
-
-// export default TaskPage;
-
-//**************************************************************** */
-
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllTasks, updateTask, deleteTask } from "../slices/TaskSlice";
+import { deleteTask, getAllTasks } from "../slices/TaskSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import TaskModal from "../components/TaskModal";
+import { getAllStatuses } from "../../status/slices/StatusSlice";
+import KanbanView from "../components/KanbanView";
+import CollapsedView from "../components/CollapsedView";
+import CalendarView from "../components/CalenderView";
+import TableView from "../components/TableView";
 
-// Map of status names to colors and symbols (for relevance)
+// Map of status names to colors and symbols
 const statusStyles: { [key: string]: { color: string; symbol: string } } = {
-  "To Do": { color: "#4FD1C5", symbol: "📋" }, // Teal, clipboard for tasks to start
-  "In Progress": { color: "#F6AD55", symbol: "⚙️" }, // Orange, gear for ongoing work
-  Done: { color: "#68D391", symbol: "✅" }, // Green, checkmark for completed tasks
-  Blocked: { color: "#F56565", symbol: "🚫" }, // Red, stop sign for blocked tasks
-  Review: { color: "#A78BFA", symbol: "👀" }, // Purple, eyes for review
+  "To Do": { color: "#4FD1C5", symbol: "📋" },
+  "In Progress": { color: "#F6AD55", symbol: "⚙️" },
+  Done: { color: "#68D391", symbol: "✅" },
+  Blocked: { color: "#F56565", symbol: "🚫" },
+  Review: { color: "#A78BFA", symbol: "👀" },
 };
 
 // Fallback colors for dynamic statuses not in the map
-const fallbackColors = [
-  "#60A5FA", // Blue
-  "#F472B6", // Pink
-  "#FBBF24", // Yellow
-  "#34D399", // Emerald
-  "#A3E635", // Lime
-];
+const fallbackColors = ["#60A5FA", "#F472B6", "#FBBF24", "#34D399", "#A3E635"];
 
 const getStatusStyle = (status: string) => {
   if (statusStyles[status]) {
     return statusStyles[status];
   }
-  // Assign a random fallback color for dynamic statuses
   const color =
     fallbackColors[Math.floor(Math.random() * fallbackColors.length)];
-  return { color, symbol: "📌" }; // Default symbol for unknown statuses
+  return { color, symbol: "📌" };
 };
 
 const TaskPage = () => {
@@ -1186,6 +35,7 @@ const TaskPage = () => {
   const { tasks, loading, error } = useSelector(
     (state: RootState) => state.task
   );
+  const { statuses } = useSelector((state: RootState) => state.status);
 
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -1198,20 +48,19 @@ const TaskPage = () => {
   });
 
   const [activeView, setActiveView] = useState<
-    "kanban" | "collapsed" | "calendar"
+    "kanban" | "collapsed" | "calendar" | "table"
   >("kanban");
 
-  // State for Collapsed view accordion
   const [expandedStatuses, setExpandedStatuses] = useState<{
     [key: string]: boolean;
   }>({});
+  const [expandedTasks, setExpandedTasks] = useState<{
+    [key: string]: boolean;
+  }>({});
 
-  // State to track which task is being hovered (for showing Edit/Delete buttons)
-  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
-
-  // Fetch tasks based on the selected view
+  // Fetch tasks and statuses
   useEffect(() => {
-    let viewType: "kanban" | "calendar" | "compact";
+    let viewType: "kanban" | "calendar" | "compact" | "table";
     switch (activeView) {
       case "kanban":
         viewType = "kanban";
@@ -1222,11 +71,18 @@ const TaskPage = () => {
       case "calendar":
         viewType = "calendar";
         break;
+      case "table":
+        viewType = "table";
+        break;
       default:
         viewType = "kanban";
     }
     dispatch(getAllTasks(viewType));
   }, [activeView, dispatch]);
+
+  useEffect(() => {
+    dispatch(getAllStatuses());
+  }, [dispatch]);
 
   const handleOpenModal = (
     mode: "add" | "view" | "edit",
@@ -1239,7 +95,10 @@ const TaskPage = () => {
     setModalState({ isOpen: false, mode: "add", task: null });
   };
 
-  // Toggle expanded state for a status in Collapsed view
+  const handleEditTask = (task: any) => {
+    handleOpenModal("edit", task);
+  };
+
   const toggleStatus = (status: string) => {
     setExpandedStatuses((prev) => ({
       ...prev,
@@ -1247,56 +106,18 @@ const TaskPage = () => {
     }));
   };
 
-  // Handle Edit button click
-  const handleEditTask = (task: any) => {
-    dispatch(updateTask(task)).then(() => {
-      dispatch(getAllTasks("kanban")); // Refresh tasks after edit
-    });
-    handleOpenModal("edit", task);
+  const toggleTask = (taskId: string) => {
+    setExpandedTasks((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
   };
-
-  // Handle Delete button click
-  const handleDeleteTask = (taskId: number) => {
-    dispatch(deleteTask(taskId)).then(() => {
-      dispatch(getAllTasks("kanban")); // Refresh tasks after deletion
-    });
-  };
-
-  // For Kanban view: tasks is already grouped by status
-  const kanbanColumns =
-    activeView === "kanban" && !Array.isArray(tasks) ? tasks : {};
-
-  // Flatten tasks for Collapsed and Calendar views
-  const flattenedTasks =
-    activeView !== "kanban" && !Array.isArray(tasks)
-      ? Object.values(tasks).flat()
-      : Array.isArray(tasks)
-      ? tasks
-      : [];
-
-  // Group tasks by status for Collapsed view (FAQ style)
-  const collapsedColumns = flattenedTasks.reduce((acc: any, task: any) => {
-    const status = task.status?.name || "No Status";
-    if (!acc[status]) acc[status] = [];
-    acc[status].push(task);
-    return acc;
-  }, {});
-
-  // Calendar view: Group tasks by start_date
-  const calendarTasks = flattenedTasks.reduce((acc: any, task: any) => {
-    const date = task.start_date?.split("T")[0] || "No Date";
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(task);
-    return acc;
-  }, {});
 
   return (
     <div className="min-h-screen bg-[#F3F4FE] p-8">
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-[#2D3748] text-2xl font-semibold">
-          Task Management
-        </h1>
+        <h1 className="text-[#2D3748] text-2xl font-semibold">Tasks</h1>
         <button
           onClick={() => handleOpenModal("add")}
           className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
@@ -1313,7 +134,7 @@ const TaskPage = () => {
             activeView === "kanban"
               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
               : "text-[#2D3748] hover:text-[#5A67D8]"
-          }`}
+          } cursor-pointer`}
         >
           Kanban
         </button>
@@ -1323,7 +144,7 @@ const TaskPage = () => {
             activeView === "collapsed"
               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
               : "text-[#2D3748] hover:text-[#5A67D8]"
-          }`}
+          } cursor-pointer`}
         >
           Collapsed
         </button>
@@ -1333,289 +154,85 @@ const TaskPage = () => {
             activeView === "calendar"
               ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
               : "text-[#2D3748] hover:text-[#5A67D8]"
-          }`}
+          } cursor-pointer`}
         >
           Calendar
         </button>
+        <button
+          onClick={() => setActiveView("table")}
+          className={`pb-2 text-sm font-medium transition-colors ${
+            activeView === "table"
+              ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
+              : "text-[#2D3748] hover:text-[#5A67D8]"
+          } cursor-pointer`}
+        >
+          Table
+        </button>
       </div>
 
-      {/* Loading and Error States */}
-      {loading && (
-        <p className="text-[#2D3748] text-center text-sm">Loading tasks...</p>
-      )}
-      {error && <p className="text-[#E53E3E] text-center text-sm">{error}</p>}
-
-      {/* Kanban View */}
-      {activeView === "kanban" && !loading && !error && (
-        <div className="flex flex-col sm:flex-row gap-4 overflow-x-auto pb-4">
-          {Object.keys(kanbanColumns).length === 0 ? (
-            <p className="text-[#2D3748] text-center text-sm opacity-70">
-              No statuses available. Add a task to get started.
-            </p>
-          ) : (
-            (Object.entries(kanbanColumns) as [string, any[]][]).map(
-              ([status, tasks]) => {
-                const { color, symbol } = getStatusStyle(status);
-                return (
-                  <div
-                    key={status}
-                    className="flex-1 min-w-[250px] max-w-[300px]"
-                  >
-                    <div
-                      className="text-[#2D3748] text-lg font-semibold mb-3 px-2 py-1 rounded-t-md flex items-center gap-2"
-                      style={{ backgroundColor: `${color}20` }} // 20% opacity for background
-                    >
-                      <span>{symbol}</span>
-                      <span>{status}</span>
-                    </div>
-                    <div
-                      className="h-[500px] overflow-y-auto bg-transparent space-y-3 px-2"
-                      style={{
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#CBD5E0 #F3F4FE",
-                      }}
-                    >
-                      {tasks.length === 0 ? (
-                        <p className="text-[#2D3748] text-sm opacity-70">
-                          No tasks in this status.
-                        </p>
-                      ) : (
-                        tasks.map((task: any) => (
-                          <div
-                            key={task?.id || Math.random()}
-                            className="relative bg-[#FFFFFF] rounded-md p-3 border border-[#CBD5E0] shadow-sm hover:shadow-md transition-all cursor-pointer"
-                            onMouseEnter={() =>
-                              setHoveredTask(task?.id?.toString())
-                            }
-                            onMouseLeave={() => setHoveredTask(null)}
-                            onClick={() => handleOpenModal("view", task)}
-                          >
-                            <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-                              {task?.task_name || "Unnamed Task"}
-                            </h3>
-                            <div className="flex justify-between items-center">
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full ${
-                                  task?.priority === "high"
-                                    ? "bg-[#E53E3E] text-white"
-                                    : task?.priority === "medium"
-                                    ? "bg-[#F6E05E] text-[#2D3748]"
-                                    : task?.priority === "low"
-                                    ? "bg-[#68D391] text-white"
-                                    : "bg-[#CBD5E0] text-[#2D3748]"
-                                }`}
-                              >
-                                {task?.priority
-                                  ? task.priority.charAt(0).toUpperCase() +
-                                    task.priority.slice(1)
-                                  : "No Priority"}
-                              </span>
-                              <span className="text-[#2D3748] text-xs opacity-70">
-                                {task?.start_date?.split("T")[0] || "No Date"}
-                              </span>
-                            </div>
-                            {/* Edit and Delete buttons on hover */}
-                            {hoveredTask === task?.id?.toString() && (
-                              <div className="absolute top-2 right-2 flex gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditTask(task);
-                                  }}
-                                  className="text-[#5A67D8] hover:text-[#434190] transition-colors cursor-pointer"
-                                  title="Edit"
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteTask(task.id);
-                                  }}
-                                  className="text-[#E53E3E] hover:text-[#C53030] transition-colors cursor-pointer"
-                                  title="Delete"
-                                >
-                                  🗑️
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              }
+      {/* View Rendering */}
+      {activeView === "kanban" && (
+        <KanbanView
+          tasks={tasks}
+          loading={loading}
+          error={error}
+          getStatusStyle={getStatusStyle}
+          handleOpenModal={handleOpenModal}
+          handleEditTask={handleEditTask}
+          handleDeleteTask={(taskId) =>
+            dispatch(deleteTask(taskId)).then(() =>
+              dispatch(getAllTasks("kanban"))
             )
-          )}
-        </div>
+          }
+          dispatch={dispatch}
+        />
       )}
 
-      {/* Collapsed View */}
-      {activeView === "collapsed" && !loading && !error && (
-        <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-          <h2 className="text-[#2D3748] text-lg font-semibold mb-3">Tasks</h2>
-          {Object.keys(collapsedColumns).length === 0 ? (
-            <p className="text-[#2D3748] text-sm opacity-70">
-              No tasks available.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {(Object.entries(collapsedColumns) as [string, any[]][]).map(
-                ([status, tasks]) => (
-                  <div
-                    key={status}
-                    className="border-b border-[#CBD5E0] last:border-b-0"
-                  >
-                    <button
-                      onClick={() => toggleStatus(status)}
-                      className="w-full flex justify-between items-center py-3 px-2 text-left focus:outline-none"
-                    >
-                      <h3 className="text-[#2D3748] text-sm font-medium">
-                        {status}
-                      </h3>
-                      <span
-                        className={`text-[#2D3748] transform transition-transform duration-200 ${
-                          expandedStatuses[status] ? "rotate-180" : "rotate-0"
-                        }`}
-                      >
-                        ▼
-                      </span>
-                    </button>
-                    {expandedStatuses[status] && (
-                      <div className="space-y-2 pb-3 px-2">
-                        {tasks.map((task: any) => (
-                          <div
-                            key={task?.id || Math.random()}
-                            className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-                            onClick={() => handleOpenModal("view", task)}
-                          >
-                            <div className="flex-1">
-                              <h3 className="text-[#2D3748] text-sm font-medium mb-1">
-                                {task?.task_name || "Unnamed Task"}
-                              </h3>
-                              <div className="flex gap-2">
-                                <span className="text-[#2D3748] text-xs opacity-70">
-                                  {task?.status?.name || "No Status"}
-                                </span>
-                                <span
-                                  className={`text-xs px-2 py-1 rounded-full ${
-                                    task?.priority === "high"
-                                      ? "bg-[#E53E3E] text-white"
-                                      : task?.priority === "medium"
-                                      ? "bg-[#F6E05E] text-[#2D3748]"
-                                      : task?.priority === "low"
-                                      ? "bg-[#68D391] text-white"
-                                      : "bg-[#CBD5E0] text-[#2D3748]"
-                                  }`}
-                                >
-                                  {task?.priority
-                                    ? task.priority.charAt(0).toUpperCase() +
-                                      task.priority.slice(1)
-                                    : "No Priority"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                              <span className="text-[#2D3748] text-xs opacity-70">
-                                {task?.start_date?.split("T")[0] || "No Date"}
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenModal("edit", task);
-                                }}
-                                className="text-[#5A67D8] text-xs hover:underline"
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </div>
+      {activeView === "collapsed" && (
+        <CollapsedView
+          tasks={tasks}
+          loading={loading}
+          error={error}
+          getStatusStyle={getStatusStyle}
+          handleOpenModal={handleOpenModal}
+          handleEditTask={handleEditTask}
+          handleDeleteTask={(taskId) =>
+            dispatch(deleteTask(taskId)).then(() =>
+              dispatch(getAllTasks("compact"))
+            )
+          }
+          expandedStatuses={expandedStatuses}
+          expandedTasks={expandedTasks}
+          toggleStatus={toggleStatus}
+          toggleTask={toggleTask}
+          dispatch={dispatch}
+        />
       )}
 
-      {/* Calendar View */}
-      {activeView === "calendar" && !loading && !error && (
-        <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
-          <h2 className="text-[#2D3748] text-lg font-semibold mb-3">
-            Calendar View
-          </h2>
-          {Object.keys(calendarTasks).length === 0 ? (
-            <p className="text-[#2D3748] text-sm opacity-70">
-              No tasks scheduled.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {(Object.entries(calendarTasks) as [string, any[]][]).map(
-                ([date, tasks]) => (
-                  <div key={date}>
-                    <h3 className="text-[#2D3748] text-sm font-medium mb-2 bg-[#E2E8F0] rounded-md p-2">
-                      {date}
-                    </h3>
-                    <div className="space-y-2">
-                      {tasks.map((task: any) => (
-                        <div
-                          key={task?.id || Math.random()}
-                          className="flex justify-between items-center bg-[#F9FAFB] rounded-md p-3 border-l-4 border-[#38B2AC] hover:bg-[#E2E8F0] transition-colors cursor-pointer shadow-sm"
-                          onClick={() => handleOpenModal("view", task)}
-                        >
-                          <div className="flex-1">
-                            <h4 className="text-[#2D3748] text-sm font-medium mb-1">
-                              {task?.task_name || "Unnamed Task"}
-                            </h4>
-                            <div className="flex gap-2">
-                              <span className="text-[#2D3748] text-xs opacity-70">
-                                {task?.status?.name || "No Status"}
-                              </span>
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full ${
-                                  task?.priority === "high"
-                                    ? "bg-[#E53E3E] text-white"
-                                    : task?.priority === "medium"
-                                    ? "bg-[#F6E05E] text-[#2D3748]"
-                                    : task?.priority === "low"
-                                    ? "bg-[#68D391] text-white"
-                                    : "bg-[#CBD5E0] text-[#2D3748]"
-                                }`}
-                              >
-                                {task?.priority
-                                  ? task.priority.charAt(0).toUpperCase() +
-                                    task.priority.slice(1)
-                                  : "No Priority"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 items-center">
-                            <span className="text-[#2D3748] text-xs opacity-70">
-                              {task?.end_date?.split("T")[0] || "No End Date"}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenModal("edit", task);
-                              }}
-                              className="text-[#5A67D8] text-xs hover:underline"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </div>
+      {activeView === "calendar" && (
+        <CalendarView
+          tasks={tasks}
+          loading={loading}
+          error={error}
+          handleOpenModal={handleOpenModal}
+          handleEditTask={handleEditTask}
+        />
+      )}
+
+      {activeView === "table" && (
+        <TableView
+          tasks={Array.isArray(tasks) ? tasks : []}
+          loading={loading}
+          error={error}
+          getStatusStyle={getStatusStyle}
+          handleOpenModal={handleOpenModal}
+          handleEditTask={handleEditTask}
+          handleDeleteTask={(taskId) =>
+            dispatch(deleteTask(taskId)).then(() =>
+              dispatch(getAllTasks("table"))
+            )
+          }
+        />
       )}
 
       {/* Task Modal */}
@@ -1624,6 +241,8 @@ const TaskPage = () => {
         onClose={handleCloseModal}
         mode={modalState.mode}
         task={modalState.task}
+        statuses={statuses.map((status: any) => status.name)}
+        activeView={activeView} // Pass activeView to TaskModal
       />
     </div>
   );

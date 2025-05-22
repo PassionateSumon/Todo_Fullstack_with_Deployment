@@ -36,7 +36,7 @@ export const createTask = createAsyncThunk(
 export const getAllTasks = createAsyncThunk(
   "task/getAllTasks",
   async (
-    viewType: "kanban" | "compact" | "calendar" = "compact",
+    viewType: "kanban" | "compact" | "calendar" | "table" = "compact",
     { rejectWithValue }
   ) => {
     try {
@@ -86,7 +86,7 @@ export const updateTask = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.put(`/task/update/${id}`, payload);
-      return response;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to update task"

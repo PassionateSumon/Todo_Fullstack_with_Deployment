@@ -60,7 +60,7 @@ export const createTaskService = async (
         message: "Task creation failed",
       };
     }
-    // console.log("res --> ",result)
+    // console.log("res --> ", JSON.stringify(result))
     return {
       statusCode: 200,
       message: "Task created successfully",
@@ -75,7 +75,7 @@ export const createTaskService = async (
 };
 
 export const getAllTaskService = async (
-  viewType: "kanban" | "compact" | "calendar" = "compact"
+  viewType: "kanban" | "compact" | "calendar" | "table" = "compact"
 ) => {
   try {
     const tasks = await db.Task.findAll({
@@ -100,6 +100,7 @@ export const getAllTaskService = async (
         // console.log("task --> ", JSON.stringify(task));
         const status = task.status.name;
         // console.log("status --> ",status)
+        // console.log("acc-status --> ", JSON.stringify(acc[status]))
         if (!acc[status]) {
           acc[status] = [];
         }
@@ -110,9 +111,7 @@ export const getAllTaskService = async (
     } else if (viewType === "calendar") {
       // console.log("here")
       result = tasks.reduce((acc: any, task: any) => {
-        const date = task.start_date
-        ? task.start_date
-        : "no-date";
+        const date = task.start_date ? task.start_date : "no-date";
         // console.log(date)
         if (!acc[date]) {
           acc[date] = [];
@@ -184,7 +183,9 @@ export const updateTaskService = async (
   }
 ) => {
   try {
+    console.log("id --> ", id);
     const task = await db.Task.findOne({ where: { id } });
+    console.log(JSON.stringify(task));
     if (!task) {
       return {
         statusCode: 404,
@@ -203,20 +204,24 @@ export const updateTaskService = async (
       }
       status_id = statusRecord.id;
     }
+    console.log("status_id: --> ", status_id);
 
     const updatedData = {
       task_name: name ? name : task.task_name,
       task_description: description ? description : task.task_description,
-      status_id: status ? status : task.status_id,
+      status_id: status_id,
       priority: priority !== undefined ? priority : task.priority,
       start_date: start_date !== undefined ? start_date : task.start_date,
       end_date: end_date !== undefined ? end_date : task.end_date,
     };
+    console.log(updatedData);
     await db.Task.update(updatedData, { where: { id } });
+    console.log("here");
     const finalRes = await db.Task.findOne({
       where: { id },
-      include: [{ model: db.Status, attributes: ["id", "name"] }],
+      include: [{ model: db.Status, as: "status", attributes: ["id", "name"] }],
     });
+    // console.log(JSON.stringify(finalRes));
     return {
       statusCode: 200,
       message: "Status updated successfully",

@@ -56,7 +56,7 @@ export default [
   },
   {
     method: "PUT",
-    path: `${prefix}/update/:id`,
+    path: `${prefix}/update/{id}`,
     handler: updateTaskHandler,
     options: {
       auth: "jwt_access",
@@ -67,7 +67,17 @@ export default [
           name: Joi.string().optional(),
           description: Joi.string().optional(),
           status: Joi.string().optional(),
-        }).or("name", "description", "status"),
+          priority: Joi.string().optional(),
+          start_date: Joi.date().optional(),
+          end_date: Joi.date().optional(),
+        }).or(
+          "name",
+          "description",
+          "status",
+          "priority",
+          "start_date",
+          "end_date"
+        ),
       },
       payload: {
         parse: true,

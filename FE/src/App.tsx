@@ -16,7 +16,6 @@ import HomeLayout from "./common/components/HomeLayout";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
-  // const { isLoggedIn } = useSelector((state: RootState) => state.auth);
   const [isLoading, setIsLoading] = useState(false);
   const [checkAuth, setCheckAuth] = useState(false);
 
@@ -31,6 +30,14 @@ function App() {
   useEffect(() => {
     dispatch(checkAuthStatus()).finally(() => setCheckAuth(true));
   }, [dispatch]);
+
+  // Re-check auth status when isLoading transitions from true to false
+  useEffect(() => {
+    if (!isLoading && checkAuth) {
+      console.log("Loading finished, re-checking auth status...");
+      dispatch(checkAuthStatus());
+    }
+  }, [isLoading, checkAuth, dispatch]);
 
   if (!checkAuth)
     return (
