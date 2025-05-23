@@ -36,7 +36,7 @@ export default [
   },
   {
     method: "GET",
-    path: `${prefix}/all/{viewType}`,
+    path: `${prefix}/all/{viewType}/{id}`,
     handler: getAllTaskHandler,
     options: {
       auth: "jwt_access",

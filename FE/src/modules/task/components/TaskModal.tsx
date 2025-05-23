@@ -128,7 +128,7 @@ const TaskModal = ({
           toastId: "task-create-success",
         });
         onClose();
-        dispatch(getAllTasks(getViewType())); // Use dynamic viewType
+        dispatch(getAllTasks({viewType: getViewType()})); // Use dynamic viewType
       }
 
       setFormData({
@@ -146,7 +146,7 @@ const TaskModal = ({
           toastId: "task-update-success",
         });
         onClose();
-        dispatch(getAllTasks(getViewType())); // Use dynamic viewType
+        dispatch(getAllTasks({viewType: getViewType()})); // Use dynamic viewType
       }
     }
   };

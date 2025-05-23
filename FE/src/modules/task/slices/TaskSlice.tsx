@@ -36,12 +36,16 @@ export const createTask = createAsyncThunk(
 export const getAllTasks = createAsyncThunk(
   "task/getAllTasks",
   async (
-    viewType: "kanban" | "compact" | "calendar" | "table" = "compact",
-    { rejectWithValue }
+    payload: {
+      viewType?: "kanban" | "compact" | "calendar" | "table";
+      id?: number | null;
+    } = { viewType: "compact", id: null },
+    { rejectWithValue }: { rejectWithValue: (value: any) => void }
   ) => {
+    const { viewType = "compact", id = null } = payload;
     try {
-      const response = await axiosInstance.get(`/task/all/${viewType}`);
-    //   console.log(response)
+      const response = await axiosInstance.get(`/task/all/${viewType}/${id}`);
+      //   console.log(response)
       return { viewType, data: response.data };
     } catch (error: any) {
       return rejectWithValue(

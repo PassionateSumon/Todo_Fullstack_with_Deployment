@@ -3,16 +3,17 @@ import axios from "axios";
 class LoadingManager {
   private activeRequests: number = 0;
   private listeners: ((isLoading: boolean) => void)[] = [];
+  private refreshSuccessListeners: (() => void)[] = []; // New event listeners for refresh success
 
   startLoading() {
     this.activeRequests++;
-    // console.log(`startLoading: activeRequests = ${this.activeRequests}`); // Debug log
+    // console.log(`startLoading: activeRequests = ${this.activeRequests}`);
     this.notifyListeners();
   }
 
   stopLoading() {
     this.activeRequests = Math.max(0, this.activeRequests - 1);
-    // console.log(`stopLoading: activeRequests = ${this.activeRequests}`); // Debug log
+    // console.log(`stopLoading: activeRequests = ${this.activeRequests}`);
     this.notifyListeners();
   }
 
@@ -26,6 +27,21 @@ class LoadingManager {
     return () => {
       this.listeners = this.listeners.filter((lis) => lis !== cb);
     };
+  }
+
+  // New method to subscribe to refresh success events
+  onRefreshSuccess(cb: () => void) {
+    this.refreshSuccessListeners.push(cb);
+    return () => {
+      this.refreshSuccessListeners = this.refreshSuccessListeners.filter(
+        (lis) => lis !== cb
+      );
+    };
+  }
+
+  // New method to notify refresh success listeners
+  public notifyRefreshSuccess() {
+    this.refreshSuccessListeners.forEach((lis) => lis());
   }
 
   private notifyListeners() {
@@ -44,7 +60,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     loadingManager.startLoading();
-    // No need to manually set Authorization header; accessToken cookie is sent automatically
     if (config.data instanceof FormData) {
       config.headers["Content-Type"] = "multipart/form-data";
     } else {
@@ -73,11 +88,15 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // Refresh token is automatically sent via cookie (withCredentials: true)
-        const res = await axiosInstance.post("/auth/refresh", {});
-        console.log(res);
-        // No need to manually update tokens; backend should set new cookies
-        return axiosInstance(originalRequest);
+        // console.log("Attempting to refresh token...");
+        const res = (await axiosInstance.post("/auth/refresh", {})) as any;
+        // console.log("Token refresh successful:", res);
+        // Notify listeners of a successful refresh
+        loadingManager.notifyRefreshSuccess();
+        if (res.statusCode === 200) {
+          loadingManager.stopLoading();
+        }
+        return await axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error("Token refresh failed!", refreshError);
         loadingManager.stopLoading();

@@ -11,8 +11,9 @@ import ResetPassword from "./modules/auth/components/ResetPassword";
 import type { AppDispatch, RootState } from "./store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { checkAuthStatus } from "./modules/auth/slices/AuthSlice";
-import TaskPage from "./modules/task/pages/TaskPage";
 import HomeLayout from "./common/components/HomeLayout";
+import TaskPage from "./modules/task/pages/TaskPage";
+import AdminDashboard from "./modules/dashboard/components/AdminDashboard";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,24 +21,25 @@ function App() {
   const [checkAuth, setCheckAuth] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = loadingManager.subscribe((loading) => {
+    const unsubscribeLoading = loadingManager.subscribe((loading) => {
+      // console.log(`Loading state changed: ${loading}`);
       setIsLoading(loading);
     });
 
-    return () => unsubscribe();
-  }, []);
+    const unsubscribeRefresh = loadingManager.onRefreshSuccess(() => {
+      // console.log("Refresh successful, re-checking auth status...");
+      dispatch(checkAuthStatus());
+    });
+
+    return () => {
+      unsubscribeLoading();
+      unsubscribeRefresh();
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(checkAuthStatus()).finally(() => setCheckAuth(true));
   }, [dispatch]);
-
-  // Re-check auth status when isLoading transitions from true to false
-  useEffect(() => {
-    if (!isLoading && checkAuth) {
-      console.log("Loading finished, re-checking auth status...");
-      dispatch(checkAuthStatus());
-    }
-  }, [isLoading, checkAuth, dispatch]);
 
   if (!checkAuth)
     return (
@@ -67,6 +69,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomeLayout />}>
             <Route path="task" element={<TaskPage />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route index element={<Navigate to="task" replace />} />
           </Route>
         </Route>
@@ -76,11 +79,3 @@ function App() {
 }
 
 export default App;
-
-/*
-const allowedPriorities = ["high", "medium", "low"] as const;
-    const priority = allowedPriorities.includes(formData.priority as any)
-      ? (formData.priority as "high" | "medium" | "low")
-      : undefined;
-
-*/

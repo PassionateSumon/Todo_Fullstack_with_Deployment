@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { updateTask, deleteTask, getAllTasks } from "../slices/TaskSlice";
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import type { KanbanViewProps } from "../types/Task.interface";
-
-
 
 const KanbanView = ({
   tasks,
@@ -45,7 +48,7 @@ const KanbanView = ({
             payload: { status: destStatus },
           })
         ).then(() => {
-          dispatch(getAllTasks("kanban"));
+          dispatch(getAllTasks({ viewType: "kanban", id: null }));
         });
       }
     }
@@ -63,10 +66,13 @@ const KanbanView = ({
         <DragDropContext onDragEnd={onDragEnd}>
           <div
             className="w-full overflow-x-auto overflow-y-hidden"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#CBD5E0 #F3F4FE" }}
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#CBD5E0 #F3F4FE",
+            }}
           >
             <div className="flex flex-row gap-4 pb-4 min-w-fit">
-              {Object.keys(kanbanColumns).length === 0 ? (
+              {Object.keys(kanbanColumns)?.length === 0 ? (
                 <p className="text-[#2D3748] text-center text-sm opacity-70">
                   No statuses available. Add a task to get started.
                 </p>
@@ -122,7 +128,9 @@ const KanbanView = ({
                                         onMouseEnter={() =>
                                           setHoveredTask(task.id.toString())
                                         }
-                                        onMouseLeave={() => setHoveredTask(null)}
+                                        onMouseLeave={() =>
+                                          setHoveredTask(null)
+                                        }
                                         onClick={() =>
                                           handleOpenModal("view", task)
                                         }

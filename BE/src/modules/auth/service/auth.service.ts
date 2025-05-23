@@ -11,7 +11,7 @@ import { JWTUtil } from "common/utils/JWTUtils";
 
 // send invite email
 const sendInviteEmail = async (user: any, tempPassword: string) => {
-  const resetUrl = `${process.env.DEV_ORIGIN}/auth/reset-password`;
+  const resetUrl = `${process.env.DEV_ORIGIN}/reset-password`;
   const emailContent = `
     Welcome to the Todo App!
     Username: ${user.username}
@@ -179,8 +179,8 @@ export const loginService = async (
     h.state("accessToken", accessToken, {
       path: "/",
       isHttpOnly: true,
-      // ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
-      ttl: 1 * 60 * 1000, // 1 minute
+      ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+      // ttl: 1 * 60 * 1000, // 1 minute
     });
     h.state("refreshToken", refreshToken, {
       path: "/",

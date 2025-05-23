@@ -75,10 +75,14 @@ export const createTaskService = async (
 };
 
 export const getAllTaskService = async (
-  viewType: "kanban" | "compact" | "calendar" | "table" = "compact"
+  viewType: "kanban" | "compact" | "calendar" | "table" = "compact",
+  userId: number,
+  roleId: string,
+  reqUserId?: string | null
 ) => {
   try {
     const tasks = await db.Task.findAll({
+      where: { user_id: reqUserId !== "null" ? reqUserId : userId },
       attributes: [
         "id",
         "task_name",
@@ -93,34 +97,39 @@ export const getAllTaskService = async (
     if (!tasks) return { statusCode: 404, message: "Tasks not found" };
     // console.log("93: ", tasks);
 
-    let result;
+    let result = {};
 
-    if (viewType === "kanban") {
-      result = tasks.reduce((acc: any, task: any) => {
-        // console.log("task --> ", JSON.stringify(task));
-        const status = task.status.name;
-        // console.log("status --> ",status)
-        // console.log("acc-status --> ", JSON.stringify(acc[status]))
-        if (!acc[status]) {
-          acc[status] = [];
-        }
-        acc[status].push(task);
-        // console.log("acc --> ", JSON.stringify(acc));
-        return acc;
-      }, {});
-    } else if (viewType === "calendar") {
-      // console.log("here")
-      result = tasks.reduce((acc: any, task: any) => {
-        const date = task.start_date ? task.start_date : "no-date";
-        // console.log(date)
-        if (!acc[date]) {
-          acc[date] = [];
-        }
-        acc[date].push(task);
-        return acc;
-      }, {});
+    if (reqUserId === "null" || reqUserId === "undefined") {
+      if (viewType === "kanban") {
+        result = tasks.reduce((acc: any, task: any) => {
+          // console.log("task --> ", JSON.stringify(task));
+          const status = task.status.name;
+          // console.log("status --> ",status)
+          // console.log("acc-status --> ", JSON.stringify(acc[status]))
+          if (!acc[status]) {
+            acc[status] = [];
+          }
+          acc[status].push(task);
+          // console.log("acc --> ", JSON.stringify(acc));
+          return acc;
+        }, {});
+      } else if (viewType === "calendar") {
+        // console.log("here")
+        result = tasks.reduce((acc: any, task: any) => {
+          const date = task.start_date ? task.start_date : "no-date";
+          // console.log(date)
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push(task);
+          return acc;
+        }, {});
+      } else {
+        result = tasks;
+      }
     } else {
-      result = tasks;
+      if (roleId === "admin")
+        result = tasks.filter((task: any) => task.user_id === reqUserId);
     }
 
     // console.log(result);

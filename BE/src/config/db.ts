@@ -11,7 +11,7 @@ const { DB_NAME, DB_USERNAME, DB_PASSWORD } = process.env as any;
 
 export const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
   host: "localhost",
-  port: 3307,
+  port: 3306,
   dialect: "mysql",
   logging: false,
 });

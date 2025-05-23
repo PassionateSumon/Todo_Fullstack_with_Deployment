@@ -77,7 +77,7 @@ const TaskPage = () => {
       default:
         viewType = "kanban";
     }
-    dispatch(getAllTasks(viewType));
+    dispatch(getAllTasks({ viewType }));
   }, [activeView, dispatch]);
 
   useEffect(() => {
@@ -181,7 +181,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks("kanban"))
+              dispatch(getAllTasks({viewType: "kanban"}))
             )
           }
           dispatch={dispatch}
@@ -198,7 +198,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks("compact"))
+              dispatch(getAllTasks({viewType: "compact"}))
             )
           }
           expandedStatuses={expandedStatuses}
@@ -229,7 +229,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks("table"))
+              dispatch(getAllTasks({viewType: "table"}))
             )
           }
         />

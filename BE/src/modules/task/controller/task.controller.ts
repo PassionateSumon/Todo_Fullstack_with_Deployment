@@ -32,12 +32,13 @@ export const createTaskHandler = async (req: Request, h: ResponseToolkit) => {
 
 export const getAllTaskHandler = async (req: Request, h: ResponseToolkit) => {
   try {
+    const { userId, roleId } = req.auth.credentials as any;
+    const reqUserId = req.params.id as string | null;
     const viewType = req.params.viewType as "kanban" | "compact" | "calendar";
-    // console.log("controller viewType: --> ",viewType)
-    const result = await getAllTaskService(viewType);
+    const result = await getAllTaskService(viewType, userId, roleId, reqUserId);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
-    // console.log("res ---> ", result.data); 
+    // console.log("res ---> ", result.data);
     return success(result.data, "Tasks fetched successfully", 200)(h);
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);

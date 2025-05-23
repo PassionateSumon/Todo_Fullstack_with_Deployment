@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
+import Calendar from "react-calendar";
 import {
   format,
   startOfMonth,
@@ -18,10 +19,12 @@ import {
   max,
   min,
   addDays,
+  startOfDay,
 } from "date-fns";
 import type { CalendarViewProps } from "../types/Task.interface";
+import "react-calendar/dist/Calendar.css"; // Default react-calendar styles
 
-// Splits a task into weekly chunks
+// Splits a task into weekly chunks for tasks spanning multiple days
 const splitTaskByWeek = (taskStart: Date, taskEnd: Date) => {
   const segments = [];
 
@@ -29,11 +32,12 @@ const splitTaskByWeek = (taskStart: Date, taskEnd: Date) => {
   const lastDay = endOfWeek(taskEnd, { weekStartsOn: 0 });
 
   while (currentStart <= lastDay) {
-    const currentEnd = endOfWeek(currentStart, { weekStartsOn: 0 });
-
+    const currentEnd = endOfWeek(currentStart, { weekStartsOn: 1 });
     const segmentStart = max([taskStart, currentStart]);
     const segmentEnd = min([taskEnd, currentEnd]);
-    const duration = differenceInDays(segmentEnd, segmentStart) + 1;
+    const cleanStart = startOfDay(segmentStart); // actual value of the date
+    const cleanEnd = startOfDay(segmentEnd); // actual value of the date
+    const duration = differenceInDays(cleanEnd, cleanStart) + 1;
 
     segments.push({
       segmentStart,
@@ -47,7 +51,7 @@ const splitTaskByWeek = (taskStart: Date, taskEnd: Date) => {
   return segments;
 };
 
-const CalendarView = ({
+const CustomCalendarView = ({
   tasks,
   loading,
   error,
@@ -55,10 +59,8 @@ const CalendarView = ({
   handleEditTask,
 }: CalendarViewProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedMonth, setSelectedMonth] = useState(getMonth(new Date()));
-  const [selectedYear, setSelectedYear] = useState(getYear(new Date()));
 
-  // Filter tasks with valid start_date, excluding "no-date"
+  // Filter tasks with valid start_date, excluding "no-date" and tasks with no start/end dates
   const flattenedTasks = !Array.isArray(tasks)
     ? Object.keys(tasks)
         .filter((key: string) => key !== "no-date")
@@ -66,53 +68,20 @@ const CalendarView = ({
     : Array.isArray(tasks)
     ? tasks
     : [];
-  const validTasks = flattenedTasks.filter(
-    (task: any) =>
+
+  const validTasks = flattenedTasks.filter((task: any) => {
+    const hasStartDate =
       task.start_date &&
       task.start_date !== "no-date" &&
-      isValid(parseISO(task.start_date))
-  );
+      isValid(parseISO(task.start_date));
+    const hasEndDate = task.end_date && isValid(parseISO(task.end_date));
+    // Discard tasks with no start and end date
+    if (!hasStartDate && !hasEndDate) return false;
+    return true;
+  });
 
-  // Generate days for the current month
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const firstDayOfMonth = monthStart.getDay();
-  const weeksInMonth = Math.ceil((daysInMonth.length + firstDayOfMonth) / 7);
-
-  // Month navigation
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const handleMonthChange = (monthIndex: number) => {
-    setSelectedMonth(monthIndex);
-    setCurrentDate(new Date(selectedYear, monthIndex, 1));
-  };
-
-  const handlePrevMonth = () => {
-    const newDate = subMonths(currentDate, 1);
-    setCurrentDate(newDate);
-    setSelectedMonth(getMonth(newDate));
-    setSelectedYear(getYear(newDate));
-  };
-
-  const handleNextMonth = () => {
-    const newDate = addMonths(currentDate, 1);
-    setCurrentDate(newDate);
-    setSelectedMonth(getMonth(newDate));
-    setSelectedYear(getYear(newDate));
+  const handleDateChange = (value: Date) => {
+    setCurrentDate(value);
   };
 
   const getTaskSegmentsForDay = (day: Date) => {
@@ -123,6 +92,23 @@ const CalendarView = ({
       const hasValidEndDate = task.end_date && isValid(parseISO(task.end_date));
       const end = hasValidEndDate ? parseISO(task.end_date) : start;
 
+      // console.log("start and end : -->",start, end)
+
+      // Case 1: Task has only start date (no end date)
+      if (!hasValidEndDate) {
+        if (isSameDay(start, day)) {
+          segmentsForDay.push({
+            task,
+            index: 0,
+            length: 1, // Single day task
+            isFirst: true,
+            isStartOfSegment: true,
+          });
+        }
+        return;
+      }
+
+      // Case 2: Task has both start and end date
       const segments = splitTaskByWeek(start, end);
 
       segments.forEach((segment, i) => {
@@ -152,123 +138,139 @@ const CalendarView = ({
       )}
       {error && <p className="text-[#D93025] text-center text-sm">{error}</p>}
       {!loading && !error && (
-        <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#DADCE0]">
-          <h2 className="text-[#202124] text-lg font-medium mb-3">
-            Calendar View
-          </h2>
-          <div className="flex gap-4">
-            {/* Month Navigation */}
-            <div className="w-40">
-              <div className="bg-[#F1F3F4] rounded-md p-2">
-                <h3 className="text-[#202124] text-sm font-medium mb-2">
-                  {selectedYear}
-                </h3>
-                {months.map((month, index) => (
-                  <button
-                    key={month}
-                    onClick={() => handleMonthChange(index)}
-                    className={`w-full text-left px-2 py-1 text-sm font-medium ${
-                      selectedMonth === index
-                        ? "bg-[#1A73E8] text-white rounded"
-                        : "text-[#202124] hover:bg-[#E8EAED]"
-                    } transition-colors`}
-                  >
-                    {month}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Calendar Grid */}
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-2">
-                <button
-                  onClick={handlePrevMonth}
-                  className="text-[#1A73E8] hover:text-[#1557B0] text-sm font-medium transition-colors"
-                >
-                  ← Prev
-                </button>
-                <h3 className="text-[#202124] text-base font-medium">
-                  {format(currentDate, "MMMM yyyy")}
-                </h3>
-                <button
-                  onClick={handleNextMonth}
-                  className="text-[#1A73E8] hover:text-[#1557B0] text-sm font-medium transition-colors"
-                >
-                  Next →
-                </button>
-              </div>
-              <div
-                className="grid grid-cols-7 gap-px bg-[#DADCE0]"
-                style={{
-                  gridTemplateRows: `repeat(${weeksInMonth}, minmax(120px, 1fr))`,
-                }}
-              >
-                {/* Day Headers */}
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                  (day) => (
-                    <div
-                      key={day}
-                      className="text-[#5F6368] text-xs font-medium text-center py-2 bg-[#F8F9FA] border-b border-[#DADCE0]"
-                    >
-                      {day}
-                    </div>
-                  )
-                )}
-                {/* Empty cells before month start */}
-                {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-                  <div
-                    key={`empty-${index}`}
-                    className="bg-[#F8F9FA] border-r border-[#DADCE0]"
-                  />
-                ))}
-                {/* Days of the month */}
-                {daysInMonth.map((day: any) => {
-                  const taskSegments = getTaskSegmentsForDay(day);
-
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className="bg-[#FFFFFF] border-r border-[#DADCE0] p-2 relative cursor-pointer hover:bg-[#F1F3F4] transition-colors"
-                      onClick={() =>
-                        handleOpenModal("add", {
-                          start_date: format(day, "yyyy-MM-dd"),
-                        })
-                      }
-                    >
-                      <span className="text-[#5F6368] text-xs font-medium absolute top-2 left-2">
-                        {format(day, "d")}
-                      </span>
-                      <div className="mt-6 space-y-1">
-                        {taskSegments.map((segment, idx) => (
-                          <div
-                            key={`${segment.task.id}-${idx}`}
-                            className="relative bg-[#E0E0E0] text-[#202124] text-xs font-medium py-1 px-2 rounded-md cursor-pointer hover:bg-[#D0D0D0] transition-colors truncate"
-                            style={{
-                              marginTop: `${idx * 18}px`,
-                              width: `${(100 / 7) * segment.length}%`,
-                              zIndex: idx + 1,
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenModal("view", segment.task);
-                            }}
-                          >
-                            {segment.index === 0
-                              ? segment.task.task_name || "Unnamed Task"
-                              : ""}
-                          </div>
-                        ))}
+        <div className="bg-[#FFFFFF] rounded-lg p-4 border border-[#E0E0E0] w-full">
+          <style>
+            {`
+              .react-calendar {
+                width: 100% !important;
+                border: none !important;
+                font-family: Arial, sans-serif;
+              }
+              .react-calendar__month-view__days {
+                display: grid !important;
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+                gap: 1px;
+              }
+              .react-calendar__tile {
+                height: 100px !important;
+                position: relative;
+                background: #FFFFFF;
+                border: 1px solid #E0E0E0 !important;
+                padding: 4px;
+                transition: background 0.2s;
+              }
+              .react-calendar__tile:hover {
+                background: #F5F5F5 !important;
+              }
+              .react-calendar__month-view__weekdays__weekday {
+                text-align: center;
+                font-size: 12px;
+                font-weight: 500;
+                color: #757575;
+                padding: 8px 0;
+                text-transform: uppercase;
+              }
+              .react-calendar__tile--now {
+                background: #FFFFFF !important; /* No highlight for current day */
+              }
+              .react-calendar__tile--active {
+                background: #FFFFFF !important;
+                color: #202124 !important;
+              }
+              .react-calendar__navigation {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 8px;
+                gap: 16px;
+              }
+              .react-calendar__navigation__label {
+                font-size: 14px;
+                font-weight: 500;
+                color: #202124;
+                text-transform: uppercase;
+                background: none;
+                border: none;
+                cursor: default;
+              }
+              .react-calendar__navigation__arrow {
+                font-size: 14px;
+                color: #757575;
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 4px 8px;
+              }
+              .react-calendar__navigation__arrow:hover {
+                color: #202124;
+              }
+              .react-calendar__month-view__days__day--neighboringMonth {
+                color: #B0B0B0;
+              }
+              .react-calendar__tile abbr {
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                font-size: 12px;
+                color: #757575;
+                text-decoration: none;
+              }
+            `}
+          </style>
+          <Calendar
+            value={currentDate}
+            onChange={handleDateChange}
+            tileContent={({ date, view }) => {
+              if (view === "month") {
+                const taskSegments = getTaskSegmentsForDay(date);
+                return (
+                  <div className="absolute top-5 left-1 right-1 space-y-0.5">
+                    {taskSegments.map((segment, idx) => (
+                      <div
+                        key={`${segment.task.id}-${idx}`}
+                        className="bg-[#E8ECEF] text-[#202124] text-xs font-normal h-4 leading-4 px-1 rounded-sm cursor-pointer hover:bg-[#DDE2E5] transition-colors truncate"
+                        style={{
+                          zIndex: idx + 1,
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal("view", segment.task);
+                        }}
+                      >
+                        {segment.task.task_name}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+                    ))}
+                  </div>
+                );
+              }
+              return null;
+            }}
+            tileClassName="relative"
+            navigationLabel={({ date }) => (
+              <span className="text-[#202124] text-sm font-medium">
+                {format(date, "MMM yyyy").toUpperCase()}
+              </span>
+            )}
+            prevLabel={
+              <span className="text-[#757575] hover:text-[#202124] text-sm font-medium transition-colors">
+                &lt;
+              </span>
+            }
+            nextLabel={
+              <span className="text-[#757575] hover:text-[#202124] text-sm font-medium transition-colors">
+                &gt;
+              </span>
+            }
+            onClickDay={(date) =>
+              handleOpenModal("add", {
+                start_date: format(date, "yyyy-MM-dd"),
+              })
+            }
+          />
         </div>
       )}
     </>
   );
 };
 
-export default CalendarView;
+export default CustomCalendarView;
