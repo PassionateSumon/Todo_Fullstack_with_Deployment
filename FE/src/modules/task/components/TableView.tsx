@@ -153,8 +153,8 @@ const TableView = ({
       )}
       {error && <p className="text-[#F56565] text-center text-sm">{error}</p>}
       {!loading && !error && (
-        <div className="bg-[#FFFFFF] rounded-lg shadow-sm border border-[#DADCE0] overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="bg-[#FFFFFF] rounded-lg shadow-sm border h-[80vh] border-[#DADCE0] overflow-y-auto thin-scrollbar">
+          <table className="w-full text-left ">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id} className="border-b border-[#DADCE0]">

@@ -39,7 +39,7 @@ const TaskPage = () => {
 
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    mode: "add" | "view" | "edit";
+    mode: "add" | "view" | "edit" | "view-day";
     task: any | null;
   }>({
     isOpen: false,
@@ -57,6 +57,8 @@ const TaskPage = () => {
   const [expandedTasks, setExpandedTasks] = useState<{
     [key: string]: boolean;
   }>({});
+
+  const [isDragged, setIsDragged] = useState<boolean>(false);
 
   // Fetch tasks and statuses
   useEffect(() => {
@@ -81,11 +83,15 @@ const TaskPage = () => {
   }, [activeView, dispatch]);
 
   useEffect(() => {
+    if (isDragged) {
+      dispatch(getAllTasks({ viewType: "calendar" }));
+      setIsDragged(false);
+    }
     dispatch(getAllStatuses());
-  }, [dispatch]);
+  }, [dispatch, isDragged]);
 
   const handleOpenModal = (
-    mode: "add" | "view" | "edit",
+    mode: "add" | "view" | "edit" | "view-day",
     task: any | null = null
   ) => {
     setModalState({ isOpen: true, mode, task });
@@ -114,20 +120,20 @@ const TaskPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4FE] p-8">
+    <div className="min-h-screen h-[90vh] w-[80vw] overflow-x-auto bg-[#F3F4FE] p-3 mt-[-10px] ">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-[#2D3748] text-2xl font-semibold">Tasks</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-[#2D3748] text-2xl font-semibold"></h1>
         <button
           onClick={() => handleOpenModal("add")}
-          className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+          className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
         >
           <span>+</span> Add Task
         </button>
       </div>
 
       {/* View Tabs */}
-      <div className="flex gap-4 mb-6 border-b border-[#CBD5E0]">
+      <div className="flex gap-4 mb-2.5 border-b border-[#CBD5E0]">
         <button
           onClick={() => setActiveView("kanban")}
           className={`pb-2 text-sm font-medium transition-colors ${
@@ -181,7 +187,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks({viewType: "kanban"}))
+              dispatch(getAllTasks({ viewType: "kanban" }))
             )
           }
           dispatch={dispatch}
@@ -198,7 +204,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks({viewType: "compact"}))
+              dispatch(getAllTasks({ viewType: "compact" }))
             )
           }
           expandedStatuses={expandedStatuses}
@@ -216,6 +222,7 @@ const TaskPage = () => {
           error={error}
           handleOpenModal={handleOpenModal}
           handleEditTask={handleEditTask}
+          setIsDragged={setIsDragged}
         />
       )}
 
@@ -229,7 +236,7 @@ const TaskPage = () => {
           handleEditTask={handleEditTask}
           handleDeleteTask={(taskId) =>
             dispatch(deleteTask(taskId)).then(() =>
-              dispatch(getAllTasks({viewType: "table"}))
+              dispatch(getAllTasks({ viewType: "table" }))
             )
           }
         />
@@ -243,6 +250,13 @@ const TaskPage = () => {
         task={modalState.task}
         statuses={statuses.map((status: any) => status.name)}
         activeView={activeView} // Pass activeView to TaskModal
+        handleEditTask={handleEditTask}
+        handleDeleteTask={(taskId) =>
+          dispatch(deleteTask(taskId)).then(() =>
+            dispatch(getAllTasks({ viewType: "calendar" }))
+          )
+        }
+        dispatch={dispatch}
       />
     </div>
   );

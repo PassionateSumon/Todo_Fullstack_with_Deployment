@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useState, type DragEvent, type MouseEvent } from "react";
+import { useDispatch } from "react-redux";
 import Calendar from "react-calendar";
 import {
   format,
@@ -20,13 +21,27 @@ import {
   min,
   addDays,
   startOfDay,
+  subDays,
+  isAfter,
+  isBefore,
 } from "date-fns";
-import type { CalendarViewProps } from "../types/Task.interface";
-import "react-calendar/dist/Calendar.css"; // Default react-calendar styles
+import type {
+  CalendarViewProps,
+  Task,
+  TaskSegment,
+} from "../types/Task.interface";
+import "react-calendar/dist/Calendar.css";
+import { getAllTasks, updateTask } from "../slices/TaskSlice";
+import "./styles/style.css";
+import { toast } from "react-toastify";
 
 // Splits a task into weekly chunks for tasks spanning multiple days
-const splitTaskByWeek = (taskStart: Date, taskEnd: Date) => {
-  const segments = [];
+const splitTaskByWeek = (
+  taskStart: Date,
+  taskEnd: Date
+): { segmentStart: Date; duration: number; isFirst: boolean }[] => {
+  const segments: { segmentStart: Date; duration: number; isFirst: boolean }[] =
+    [];
 
   let currentStart = startOfWeek(taskStart, { weekStartsOn: 0 });
   const lastDay = endOfWeek(taskEnd, { weekStartsOn: 0 });
@@ -35,8 +50,8 @@ const splitTaskByWeek = (taskStart: Date, taskEnd: Date) => {
     const currentEnd = endOfWeek(currentStart, { weekStartsOn: 1 });
     const segmentStart = max([taskStart, currentStart]);
     const segmentEnd = min([taskEnd, currentEnd]);
-    const cleanStart = startOfDay(segmentStart); // actual value of the date
-    const cleanEnd = startOfDay(segmentEnd); // actual value of the date
+    const cleanStart = startOfDay(segmentStart);
+    const cleanEnd = startOfDay(segmentEnd);
     const duration = differenceInDays(cleanEnd, cleanStart) + 1;
 
     segments.push({
@@ -57,8 +72,10 @@ const CustomCalendarView = ({
   error,
   handleOpenModal,
   handleEditTask,
+  setIsDragged,
 }: CalendarViewProps) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const dispatch = useDispatch();
 
   // Filter tasks with valid start_date, excluding "no-date" and tasks with no start/end dates
   const flattenedTasks = !Array.isArray(tasks)
@@ -69,13 +86,12 @@ const CustomCalendarView = ({
     ? tasks
     : [];
 
-  const validTasks = flattenedTasks.filter((task: any) => {
+  const validTasks = flattenedTasks.filter((task: Task) => {
     const hasStartDate =
       task.start_date &&
       task.start_date !== "no-date" &&
       isValid(parseISO(task.start_date));
     const hasEndDate = task.end_date && isValid(parseISO(task.end_date));
-    // Discard tasks with no start and end date
     if (!hasStartDate && !hasEndDate) return false;
     return true;
   });
@@ -84,23 +100,20 @@ const CustomCalendarView = ({
     setCurrentDate(value);
   };
 
-  const getTaskSegmentsForDay = (day: Date) => {
-    const segmentsForDay = [];
+  const getTaskSegmentsForDay = (day: Date): TaskSegment[] => {
+    const segmentsForDay: TaskSegment[] = [];
 
-    validTasks.forEach((task: any) => {
+    validTasks.forEach((task: Task) => {
       const start = parseISO(task.start_date);
       const hasValidEndDate = task.end_date && isValid(parseISO(task.end_date));
       const end = hasValidEndDate ? parseISO(task.end_date) : start;
 
-      // console.log("start and end : -->",start, end)
-
-      // Case 1: Task has only start date (no end date)
       if (!hasValidEndDate) {
         if (isSameDay(start, day)) {
           segmentsForDay.push({
             task,
             index: 0,
-            length: 1, // Single day task
+            length: 1,
             isFirst: true,
             isStartOfSegment: true,
           });
@@ -108,7 +121,6 @@ const CustomCalendarView = ({
         return;
       }
 
-      // Case 2: Task has both start and end date
       const segments = splitTaskByWeek(start, end);
 
       segments.forEach((segment, i) => {
@@ -131,6 +143,82 @@ const CustomCalendarView = ({
     return segmentsForDay;
   };
 
+  // Handle task drop to update task dates
+  const handleTaskDrop = (
+    taskId: number,
+    taskData: Task,
+    targetDate: Date,
+    isFirstSegment: boolean
+  ) => {
+    if (!isValid(targetDate)) {
+      // console.log("Invalid target date");
+      toast.error("Invalid date selected for drop.");
+      return;
+    }
+
+    // console.log("handleTaskDrop called", {
+    //   taskId,
+    //   taskData,
+    //   targetDate,
+    //   isFirstSegment,
+    // });
+
+    const currentStartDate = parseISO(taskData.start_date);
+    const currentEndDate = taskData.end_date
+      ? parseISO(taskData.end_date)
+      : currentStartDate;
+    const newTargetDate = startOfDay(targetDate);
+
+    // Skip if no change
+    if (
+      (isFirstSegment && isSameDay(newTargetDate, currentStartDate)) ||
+      (!isFirstSegment && isSameDay(newTargetDate, currentEndDate))
+    ) {
+      // console.log("No date change, skipping");
+      return;
+    }
+
+    let payload: { start_date: string; end_date: string };
+
+    if (isFirstSegment) {
+      const newStartDate = format(newTargetDate, "yyyy-MM-dd");
+      if (isAfter(newTargetDate, currentEndDate)) {
+        // console.log("Start date after end date");
+        toast.error("Start date cannot be after end date.");
+        return;
+      }
+      payload = {
+        start_date: newStartDate,
+        end_date: taskData.end_date || newStartDate,
+      };
+    } else {
+      const newEndDate = format(newTargetDate, "yyyy-MM-dd");
+      if (isBefore(newTargetDate, currentStartDate)) {
+        // console.log("End date before start date");
+        toast.error("End date cannot be before start date.");
+        return;
+      }
+      payload = {
+        start_date: taskData.start_date,
+        end_date: newEndDate,
+      };
+    }
+
+    // console.log("Dispatching updateTask with payload:", payload);
+    dispatch(updateTask({ id: taskId, payload })).then((result) => {
+      if (updateTask.fulfilled.match(result)) {
+        // console.log("Update successful, dispatching getAllTasks");
+        setIsDragged(true);
+        dispatch(getAllTasks({ viewType: "calendar", id: null }));
+      } else {
+        // console.error("Update failed:", result.error.message);
+        toast.error(
+          `Failed to update task: ${result.error.message || "Unknown error"}`
+        );
+      }
+    });
+  };
+
   return (
     <>
       {loading && (
@@ -139,113 +227,156 @@ const CustomCalendarView = ({
       {error && <p className="text-[#D93025] text-center text-sm">{error}</p>}
       {!loading && !error && (
         <div className="bg-[#FFFFFF] rounded-lg p-4 border border-[#E0E0E0] w-full">
-          <style>
-            {`
-              .react-calendar {
-                width: 100% !important;
-                border: none !important;
-                font-family: Arial, sans-serif;
-              }
-              .react-calendar__month-view__days {
-                display: grid !important;
-                grid-template-columns: repeat(7, minmax(0, 1fr));
-                gap: 1px;
-              }
-              .react-calendar__tile {
-                height: 100px !important;
-                position: relative;
-                background: #FFFFFF;
-                border: 1px solid #E0E0E0 !important;
-                padding: 4px;
-                transition: background 0.2s;
-              }
-              .react-calendar__tile:hover {
-                background: #F5F5F5 !important;
-              }
-              .react-calendar__month-view__weekdays__weekday {
-                text-align: center;
-                font-size: 12px;
-                font-weight: 500;
-                color: #757575;
-                padding: 8px 0;
-                text-transform: uppercase;
-              }
-              .react-calendar__tile--now {
-                background: #FFFFFF !important; /* No highlight for current day */
-              }
-              .react-calendar__tile--active {
-                background: #FFFFFF !important;
-                color: #202124 !important;
-              }
-              .react-calendar__navigation {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-bottom: 8px;
-                gap: 16px;
-              }
-              .react-calendar__navigation__label {
-                font-size: 14px;
-                font-weight: 500;
-                color: #202124;
-                text-transform: uppercase;
-                background: none;
-                border: none;
-                cursor: default;
-              }
-              .react-calendar__navigation__arrow {
-                font-size: 14px;
-                color: #757575;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 4px 8px;
-              }
-              .react-calendar__navigation__arrow:hover {
-                color: #202124;
-              }
-              .react-calendar__month-view__days__day--neighboringMonth {
-                color: #B0B0B0;
-              }
-              .react-calendar__tile abbr {
-                position: absolute;
-                top: 4px;
-                left: 4px;
-                font-size: 12px;
-                color: #757575;
-                text-decoration: none;
-              }
-            `}
-          </style>
           <Calendar
             value={currentDate}
             onChange={handleDateChange}
             tileContent={({ date, view }) => {
               if (view === "month") {
                 const taskSegments = getTaskSegmentsForDay(date);
+                const maxVisibleTasks = 2; // Limit to 2 visible tasks per day
+                const visibleTasks = taskSegments.slice(0, maxVisibleTasks); // Show only the first 2 tasks
+                const hiddenTasksCount = taskSegments.length - maxVisibleTasks; // Count of hidden tasks
+
                 return (
-                  <div className="absolute top-5 left-1 right-1 space-y-0.5">
-                    {taskSegments.map((segment, idx) => (
+                  <div
+                    className="drop-target w-full h-full absolute top-0 left-0"
+                    data-date={format(date, "yyyy-MM-dd")}
+                    onDragOver={(e: DragEvent<HTMLDivElement>) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                    }}
+                    onDrop={(e: DragEvent<HTMLDivElement>) => {
+                      e.preventDefault();
+                      const taskId = Number(e.dataTransfer.getData("taskId"));
+                      const taskDataStr = e.dataTransfer.getData("taskData");
+                      const isFirstSegment =
+                        e.dataTransfer.getData("isFirstSegment") === "true";
+                      const targetDateStr = e.currentTarget.dataset.date;
+                      if (taskId && taskDataStr && targetDateStr) {
+                        try {
+                          const taskData = JSON.parse(taskDataStr) as Task;
+                          const targetDate = parseISO(targetDateStr);
+                          if (isValid(targetDate)) {
+                            handleTaskDrop(
+                              taskId,
+                              taskData,
+                              targetDate,
+                              isFirstSegment
+                            );
+                          }
+                        } catch (error) {
+                          toast.error("Failed to process drop.");
+                        }
+                      }
+                    }}
+                  >
+                    {/* Display visible tasks */}
+                    {visibleTasks.map((segment, idx) => {
+                      const hasValidEndDate =
+                        segment.task.end_date &&
+                        isValid(parseISO(segment.task.end_date));
+                      const taskStartDate = parseISO(segment.task.start_date);
+                      const taskEndDate = hasValidEndDate
+                        ? parseISO(segment.task.end_date)
+                        : taskStartDate;
+                      const isFirstSegment = isSameDay(date, taskStartDate);
+                      const isLastSegment = isSameDay(date, taskEndDate);
+                      const isSingleDay = isSameDay(taskStartDate, taskEndDate);
+
+                      const showLeftBar = isSingleDay || isFirstSegment;
+                      const showRightBar = isSingleDay || isLastSegment;
+
+                      return (
+                        <div
+                          key={`${segment.task.id}-${idx}`}
+                          className="bg-[#759ffa] text-[#FFFFFF] text-xs font-normal h-4 leading-4 px-1 my-1 rounded-sm relative transition-colors truncate"
+                          style={{ zIndex: 10 }}
+                          onClick={(e: MouseEvent<HTMLDivElement>) => {
+                            e.stopPropagation();
+                            handleOpenModal("view", segment.task);
+                          }}
+                        >
+                          {showLeftBar && (
+                            <div
+                              className="task-bar-left absolute left-0 top-0 bottom-0 w-1 bg-[#6482c1] cursor-resize-x"
+                              draggable={true}
+                              onDragStart={(e: DragEvent<HTMLDivElement>) => {
+                                console.log("Drag start: left bar");
+                                e.dataTransfer.setData(
+                                  "taskId",
+                                  segment.task.id.toString()
+                                );
+                                e.dataTransfer.setData(
+                                  "taskData",
+                                  JSON.stringify(segment.task)
+                                );
+                                e.dataTransfer.setData(
+                                  "isFirstSegment",
+                                  "true"
+                                );
+                                e.dataTransfer.effectAllowed = "move";
+                              }}
+                              onDragEnd={(e: DragEvent<HTMLDivElement>) => {
+                                console.log("Drag end: left bar");
+                                e.dataTransfer.clearData();
+                              }}
+                            />
+                          )}
+                          <span className="px-1">{segment.task.task_name}</span>
+                          {showRightBar && (
+                            <div
+                              className="task-bar-right absolute right-0 top-0 bottom-0 w-1 bg-[#6482c1] cursor-resize-x"
+                              draggable={true}
+                              onDragStart={(e: DragEvent<HTMLDivElement>) => {
+                                console.log("Drag start: right bar");
+                                e.dataTransfer.setData(
+                                  "taskId",
+                                  segment.task.id.toString()
+                                );
+                                e.dataTransfer.setData(
+                                  "taskData",
+                                  JSON.stringify(segment.task)
+                                );
+                                e.dataTransfer.setData(
+                                  "isFirstSegment",
+                                  "false"
+                                );
+                                e.dataTransfer.effectAllowed = "move";
+                              }}
+                              onDragEnd={(e: DragEvent<HTMLDivElement>) => {
+                                console.log("Drag end: right bar");
+                                e.dataTransfer.clearData();
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Show "Show More" if there are hidden tasks */}
+                    {hiddenTasksCount > 0 && (
                       <div
-                        key={`${segment.task.id}-${idx}`}
-                        className="bg-[#E8ECEF] text-[#202124] text-xs font-normal h-4 leading-4 px-1 rounded-sm cursor-pointer hover:bg-[#DDE2E5] transition-colors truncate"
-                        style={{
-                          zIndex: idx + 1,
-                        }}
-                        onClick={(e) => {
+                        className="text-[#202124] text-xs font-medium mt-1 cursor-pointer hover:underline"
+                        onClick={(e: MouseEvent<HTMLDivElement>) => {
                           e.stopPropagation();
-                          handleOpenModal("view", segment.task);
+                          // Open a modal or tooltip with all tasks for this day
+                          handleOpenModal("view-day", {
+                            date,
+                            tasks: taskSegments.map((segment) => segment.task),
+                          });
                         }}
                       >
-                        {segment.task.task_name}
+                        +{hiddenTasksCount} more
                       </div>
-                    ))}
+                    )}
                   </div>
                 );
               }
               return null;
             }}
-            tileClassName="relative"
+            tileClassName={({ date, view }) =>
+              `relative ${view === "month" ? `drop-target` : ""}`
+            }
             navigationLabel={({ date }) => (
               <span className="text-[#202124] text-sm font-medium">
                 {format(date, "MMM yyyy").toUpperCase()}
@@ -253,12 +384,12 @@ const CustomCalendarView = ({
             )}
             prevLabel={
               <span className="text-[#757575] hover:text-[#202124] text-sm font-medium transition-colors">
-                &lt;
+                {"<"}
               </span>
             }
             nextLabel={
               <span className="text-[#757575] hover:text-[#202124] text-sm font-medium transition-colors">
-                &gt;
+                {">"}
               </span>
             }
             onClickDay={(date) =>

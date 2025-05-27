@@ -89,7 +89,7 @@ const KanbanView = ({
                             ref={provided.innerRef}
                           >
                             <div
-                              className="text-[#2D3748] text-lg font-semibold mb-3 px-2 py-1 rounded-t-md flex items-center gap-2"
+                              className="text-[#2D3748] text-lg font-semibold mb-3 px-2 py-1 rounded-t-md flex items-center gap-2 cursor-pointer "
                               style={{ backgroundColor: `${color}20` }}
                             >
                               <span>{symbol}</span>

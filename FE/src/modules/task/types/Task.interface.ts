@@ -9,6 +9,8 @@ export interface Task {
   start_date: string | null;
   end_date: string | null;
   status: { id: number; name: string };
+  date?: Date; // For view-day mode
+  tasks?: any[]; // For view-day mode
 }
 
 export interface TaskState {
@@ -21,13 +23,16 @@ export interface TaskState {
 export interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: "add" | "view" | "edit";
+  mode: "add" | "view" | "edit" | "view-day";
   task?: Task | null;
 }
 
 export interface ExtendedTaskModalProps extends TaskModalProps {
   activeView: "kanban" | "collapsed" | "calendar" | "table";
   statuses: string[];
+  handleEditTask: (task: Task) => void;
+  handleDeleteTask: (taskId: number) => void;
+  dispatch: AppDispatch;
 }
 
 export interface KanbanViewProps {
@@ -62,6 +67,7 @@ export interface CalendarViewProps {
   error: string | null;
   handleOpenModal: (mode: "add" | "view" | "edit", task?: any) => void;
   handleEditTask: (task: any) => void;
+  setIsDragged: (isDragged: boolean) => void;
 }
 
 export interface CalendarViewProps {
@@ -80,4 +86,22 @@ export interface TableViewProps {
   handleOpenModal: (mode: "add" | "view" | "edit", task?: any) => void;
   handleEditTask: (task: any) => void;
   handleDeleteTask: (taskId: number) => void;
+}
+
+// export interface Task {
+//   id: number;
+//   task_name: string;
+//   start_date: string;
+//   end_date?: string;
+//   description?: string;
+//   status?: string;
+//   priority?: "high" | "medium" | "low";
+// }
+
+export interface TaskSegment {
+  task: Task;
+  index: number;
+  length: number;
+  isFirst: boolean;
+  isStartOfSegment: boolean;
 }

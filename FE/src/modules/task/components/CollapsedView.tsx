@@ -60,7 +60,7 @@ const CollapsedView = ({
             payload: { status: destStatus },
           })
         ).then(() => {
-          dispatch(getAllTasks("compact"));
+          dispatch(getAllTasks({ viewType: "compact" }));
         });
       }
     }
@@ -74,7 +74,7 @@ const CollapsedView = ({
       {error && <p className="text-[#E53E3E] text-center text-sm">{error}</p>}
       {!loading && !error && (
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="bg-[#FFFFFF] rounded-lg p-4 shadow-sm border border-[#CBD5E0]">
+          <div className="bg-[#FFFFFF] h-[80vh] overflow-y-auto rounded-lg p-4 shadow-sm border border-[#CBD5E0] pb-4 thin-scrollbar">
             <h2 className="text-[#2D3748] text-lg font-semibold mb-3">Tasks</h2>
             {Object.keys(collapsedColumns).length === 0 ? (
               <p className="text-[#2D3748] text-sm opacity-70">

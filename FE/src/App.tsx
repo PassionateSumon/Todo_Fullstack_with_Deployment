@@ -8,12 +8,16 @@ import LoginPage from "./modules/auth/pages/LoginPage";
 import ProtectedRoute from "./common/utils/ProtectedRoute";
 import Otp from "./modules/auth/components/Otp";
 import ResetPassword from "./modules/auth/components/ResetPassword";
-import type { AppDispatch, RootState } from "./store/store";
-import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "./store/store";
+import { useDispatch } from "react-redux";
 import { checkAuthStatus } from "./modules/auth/slices/AuthSlice";
 import HomeLayout from "./common/components/HomeLayout";
 import TaskPage from "./modules/task/pages/TaskPage";
 import AdminDashboard from "./modules/dashboard/components/AdminDashboard";
+import GeneralDashboard from "./modules/dashboard/components/GeneralDashboard";
+import StatusCRUD from "./modules/status/components/StatusCRUD";
+import NotFound from "./common/components/NotFound";
+import StatusPage from "./modules/status/pages/StatusPage";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,18 +26,11 @@ function App() {
 
   useEffect(() => {
     const unsubscribeLoading = loadingManager.subscribe((loading) => {
-      // console.log(`Loading state changed: ${loading}`);
       setIsLoading(loading);
-    });
-
-    const unsubscribeRefresh = loadingManager.onRefreshSuccess(() => {
-      // console.log("Refresh successful, re-checking auth status...");
-      dispatch(checkAuthStatus());
     });
 
     return () => {
       unsubscribeLoading();
-      unsubscribeRefresh();
     };
   }, [dispatch]);
 
@@ -69,10 +66,14 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomeLayout />}>
             <Route path="task" element={<TaskPage />} />
+            <Route path="status" element={<StatusPage />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard/me" element={<GeneralDashboard />} />
             <Route index element={<Navigate to="task" replace />} />
           </Route>
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

@@ -6,6 +6,7 @@ import {
   getSingleTaskHandler,
   updateTaskHandler,
 } from "../controller/task.controller";
+import { Request, ResponseToolkit } from "@hapi/hapi";
 
 const prefix = "/task";
 
@@ -78,6 +79,9 @@ export default [
           "start_date",
           "end_date"
         ),
+        failAction: (req: Request, h: ResponseToolkit, err: any) => {
+          return h.response({ error: err.message }).code(400).takeover();
+        },
       },
       payload: {
         parse: true,

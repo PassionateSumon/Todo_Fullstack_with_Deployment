@@ -1,5 +1,6 @@
 export interface dashboardInitialState {
-  dashboardData: any[];
+  dashboardData?: any[];
+  dashboardDataOfActualUser?: any[];
   loading: boolean;
   error: string | null;
 }

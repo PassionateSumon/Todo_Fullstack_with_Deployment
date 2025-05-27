@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    /* Firefox */
+  }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    /* Chrome */
+    height: 6px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    /* Hide the track */
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #a0aec0;
+    /* Adjust as needed */
+    border-radius: 9999px;
+  }
+}

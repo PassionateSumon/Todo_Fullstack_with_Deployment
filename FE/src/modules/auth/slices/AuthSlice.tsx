@@ -9,8 +9,9 @@ import axiosInstance from "../../../common/utils/AxiosInstance";
 import axios from "axios";
 
 const initialState: AuthState = {
-  isLoggedIn: false, // Will be determined by API call
+  isLoggedIn: false,
   email: null,
+  role: null,
   loading: false,
   error: null,
 };
@@ -43,8 +44,10 @@ export const checkAuthStatus = createAsyncThunk(
   "auth/checkAuthStatus",
   async (_, { rejectWithValue }) => {
     try {
-      await axios.get("http://localhost:7030/auth/me", { withCredentials: true });
-      return true;
+      const res = await axios.get("http://localhost:7030/auth/me", {
+        withCredentials: true,
+      });
+      return res.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Not authenticated"
@@ -141,8 +144,9 @@ const AuthSlice = createSlice({
       .addCase(login.fulfilled, (state, action: any) => {
         state.loading = false;
         state.isLoggedIn = true;
-        console.log(action.payload);
+        // console.log(action.payload);
         state.email = action.payload?.email;
+        state.role = action.payload?.role;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -165,9 +169,11 @@ const AuthSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(checkAuthStatus.fulfilled, (state) => {
+      .addCase(checkAuthStatus.fulfilled, (state, action: any) => {
+        // console.log(action.payload.data);
         state.loading = false;
         state.isLoggedIn = true;
+        state.role = action.payload?.data?.user?.role;
       })
       .addCase(checkAuthStatus.rejected, (state, action) => {
         state.loading = false;

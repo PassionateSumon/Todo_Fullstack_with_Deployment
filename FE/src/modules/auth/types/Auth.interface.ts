@@ -1,6 +1,7 @@
 export interface AuthState {
   isLoggedIn: boolean;
   email: string | null;
+  role: string | null;
   loading: boolean;
   error: string | null;
 }

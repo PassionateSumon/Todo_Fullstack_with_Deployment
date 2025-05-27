@@ -1,5 +1,6 @@
 import { db } from "config/db";
 import { statusCodes } from "common/constants/constants";
+import { where } from "sequelize";
 
 const priorities = ["high", "medium", "low"];
 
@@ -305,7 +306,7 @@ const getDashBoardServiceForUser = async (userId: number) => {
       where: { user_id: userId },
       include: [
         {
-          model: db.Status,
+          model: Status,
           as: "status",
         },
       ],
@@ -328,6 +329,20 @@ const getDashBoardServiceForUser = async (userId: number) => {
         task.status.name !== "Completed"
     ).length;
 
+    const tasksByStatus = await Task.findAll({
+      where: { user_id: userId },
+      include: [{ model: Status, as: "status" }],
+      attributes: ["status_id", [sequelize.literal("COUNT(*)"), "count"]],
+      group: "status_id",
+      raw: true,
+    });
+    const tasksByPriority = await Task.findAll({
+      attributes: ["priority", [sequelize.literal("COUNT(*)"), "count"]],
+      where: { user_id: userId },
+      group: "priority",
+      raw: true,
+    });
+
     return {
       statusCode: statusCodes.SUCCESS,
       message: "User dashboard data retrieved successfully",
@@ -337,6 +352,18 @@ const getDashBoardServiceForUser = async (userId: number) => {
         completionRate: parseFloat(completionRate.toFixed(2)),
         pendingTasks,
         overdueTasks,
+        tasksByStatus: tasksByStatus.map((task: any) => ({
+          statusId: task.status_id,
+          statusName: task["status.name"],
+          count: parseInt(task.count, 10),
+        })),
+        tasksByPriority: tasksByPriority.reduce(
+          (acc: Record<string, number>, task: any) => {
+            acc[task.priority] = parseInt(task.count, 10);
+            return acc;
+          },
+          {}
+        ),
       },
     };
   } catch (error: any) {

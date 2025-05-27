@@ -195,6 +195,7 @@ export const loginService = async (
         id: isExistUser.id,
         name: isExistUser.name,
         email: isExistUser.email,
+        role: isExistUser.user_type,
         username: isExistUser.username,
         user_type: isExistUser.user_type,
         isActive: isExistUser.isActive,
@@ -446,11 +447,11 @@ export const myService = async (userId: string) => {
         message: "User not found",
       };
     }
-    if(!user.isOtpVerified) {
+    if (!user.isOtpVerified) {
       return {
         statusCode: 400,
         message: "User is not verified through OTP verification",
-      }
+      };
     }
 
     return {
@@ -461,6 +462,7 @@ export const myService = async (userId: string) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.user_type,
           username: user.username,
           user_type: user.user_type,
           isActive: user.isActive,
@@ -510,7 +512,9 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
       path: "/",
     });
     return {
+      statusCode: 200,
       message: "User logged out successfully",
+      data: {},
     };
   } catch (err: any) {
     return {

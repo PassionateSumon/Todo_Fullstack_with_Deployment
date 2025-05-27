@@ -44,7 +44,7 @@ export const createTaskService = async (
 
     const wrappedInput = {
       task_name: name,
-      description: description ? description : null,
+      task_description: description ? description : null,
       user_id: userId,
       status_id: status_id.id,
       priority: priority ? priority : null,
@@ -102,22 +102,16 @@ export const getAllTaskService = async (
     if (reqUserId === "null" || reqUserId === "undefined") {
       if (viewType === "kanban") {
         result = tasks.reduce((acc: any, task: any) => {
-          // console.log("task --> ", JSON.stringify(task));
           const status = task.status.name;
-          // console.log("status --> ",status)
-          // console.log("acc-status --> ", JSON.stringify(acc[status]))
           if (!acc[status]) {
             acc[status] = [];
           }
           acc[status].push(task);
-          // console.log("acc --> ", JSON.stringify(acc));
           return acc;
         }, {});
       } else if (viewType === "calendar") {
-        // console.log("here")
         result = tasks.reduce((acc: any, task: any) => {
           const date = task.start_date ? task.start_date : "no-date";
-          // console.log(date)
           if (!acc[date]) {
             acc[date] = [];
           }

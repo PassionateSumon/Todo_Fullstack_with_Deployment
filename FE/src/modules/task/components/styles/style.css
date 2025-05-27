@@ -1,0 +1,103 @@
+.react-calendar {
+    width: 100% !important;
+    border: none !important;
+    font-family: Arial, sans-serif;
+}
+
+.react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1px;
+}
+
+.react-calendar__tile {
+    height: 100px !important;
+    position: relative;
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0 !important;
+    padding: 4px;
+    transition: background 0.2s;
+}
+
+.react-calendar__tile:hover,
+.drop-target:hover {
+    background: #F5F5F5 !important;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #757575;
+    padding: 8px 0;
+    text-transform: uppercase;
+}
+
+.react-calendar__tile--now {
+    background: #FFFFFF !important;
+}
+
+.react-calendar__tile--active {
+    background: #FFFFFF !important;
+    color: #202124 !important;
+}
+
+.react-calendar__navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 16px;
+}
+
+.react-calendar__navigation__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    cursor: default;
+}
+
+.react-calendar__navigation__arrow {
+    font-size: 14px;
+    color: #757575;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.react-calendar__navigation__arrow:hover {
+    color: #202124;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+    color: #B0B0B0;
+}
+
+.react-calendar__tile abbr {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 12px;
+    color: #757575;
+    text-decoration: none;
+}
+
+[draggable="true"] {
+    cursor: grab;
+}
+
+[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.task-bar-left:hover,
+.task-bar-right:hover {
+  background: #4a6fa5 !important;
+}
+.cursor-resize-x {
+  cursor: ew-resize !important;
+}
