@@ -32,6 +32,7 @@ const getDashBoardService = async () => {
       group: "priority",
       raw: true,
     });
+    // console.log(tasksByPriorityRaw)
 
     // 5. Overdue tasks
     const overdueTasks = await Task.count({
@@ -104,8 +105,9 @@ const getDashBoardService = async () => {
     const currentMonth = currentDate.getMonth();
     const weeklyTasks = await Task.findAll({
       attributes: [
-        [sequelize.fn("YEARWEEK", sequelize.col("createdAt"), 1), "week"],
-        [sequelize.literal("COUNT(*)"), "count"],
+        [sequelize.fn("YEAR", sequelize.col("createdAt")), "year"],
+        [sequelize.fn("WEEK", sequelize.col("createdAt"), 1), "week"],
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
       ],
       where: {
         createdAt: {
@@ -121,17 +123,31 @@ const getDashBoardService = async () => {
           ),
         },
       },
-      group: [sequelize.fn("YEARWEEK", sequelize.col("createdAt"), 1)],
+      group: [
+        sequelize.fn("YEAR", sequelize.col("createdAt")),
+        sequelize.fn("WEEK", sequelize.col("createdAt"), 1),
+      ],
+      order: [
+        [sequelize.fn("YEAR", sequelize.col("createdAt")), "ASC"],
+        [sequelize.fn("WEEK", sequelize.col("createdAt"), 1), "ASC"],
+      ],
       raw: true,
     });
+
+    // console.log(weeklyTasks);
 
     // 10. Yearly task report
     const yearlyTasks = await Task.findAll({
       attributes: [
-        [sequelize.fn("YEAR", sequelize.col("createdAt")), "year"],
-        [sequelize.literal("COUNT(*)"), "count"],
+        [sequelize.fn("YEAR", sequelize.col("start_date")), "year"],
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"],
       ],
-      group: [sequelize.fn("YEAR", sequelize.col("createdAt"))],
+      where: {
+        start_date: {
+          [db.Sequelize.Op.ne]: null, // exclude tasks with null start_date
+        },
+      },
+      group: [sequelize.fn("YEAR", sequelize.col("start_date"))],
       raw: true,
     });
 
@@ -263,13 +279,13 @@ const getDashBoardService = async () => {
         statusName: status.name,
         tasksCount: status.tasks.length,
       })),
-      tasksByPriority: priorities.reduce((acc, priority) => {
-        const found = tasksByPriorityRaw.find(
-          (item: any) => item.priority === priority
-        );
-        acc[priority] = found ? parseInt(found.count, 10) : 0;
-        return acc;
-      }, {} as Record<string, number>),
+      tasksByPriority: tasksByPriorityRaw.reduce(
+        (acc: Record<string, number>, task: any) => {
+          acc[task.priority] = parseInt(task.count, 10);
+          return acc;
+        },
+        {}
+      ),
       overdueTasks,
       recentTasks,
       recentUsers,

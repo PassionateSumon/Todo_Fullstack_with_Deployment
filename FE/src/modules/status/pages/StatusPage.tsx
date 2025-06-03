@@ -39,8 +39,6 @@ const StatusPage = () => {
         <span>+</span> Add Status
       </button>
     </div>
-    {/* Add your StatusCRUD component here */}
-    {/* <StatusCRUD /> */}
     {/* Modal for adding/editing status */}
     {modalState.isOpen && (
       <div>

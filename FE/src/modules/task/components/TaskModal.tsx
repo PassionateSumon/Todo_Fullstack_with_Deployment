@@ -5,8 +5,6 @@ import type { AppDispatch, RootState } from "../../../store/store";
 import { toast } from "react-toastify";
 import type { ExtendedTaskModalProps } from "../types/Task.interface";
 import { format } from "date-fns";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
