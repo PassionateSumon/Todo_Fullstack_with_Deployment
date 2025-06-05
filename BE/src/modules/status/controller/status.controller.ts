@@ -9,7 +9,7 @@ import {
 
 export const createStatusHandler = async (req: Request, h: ResponseToolkit) => {
   try {
-    const payload = req.payload as { name: string };
+    const payload = req.payload as any;
     const result = await createstatusService(payload);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);

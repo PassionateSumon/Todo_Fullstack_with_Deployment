@@ -3,7 +3,7 @@ import { db } from "config/db";
 export const createstatusService = async ({ name }: { name: string }) => {
   try {
     const existed = await db.Status.findOne({ where: { name } });
-    console.log("existed: --> ", existed);
+    // console.log("existed: --> ", existed);
     if (existed) {
       return {
         statusCode: 409,

@@ -18,6 +18,7 @@ export interface TaskState {
   currentTask: Task | null;
   loading: boolean;
   error: string | null;
+  isUpdatingOrDeleting?: boolean;
 }
 
 export interface TaskModalProps {
@@ -39,6 +40,7 @@ export interface KanbanViewProps {
   tasks: any;
   loading: boolean;
   error: string | null;
+  statuses: string[];
   getStatusStyle: (status: string) => { color: string; symbol: string };
   handleOpenModal: (mode: "add" | "view" | "edit", task?: any) => void;
   handleEditTask: (task: any) => void;

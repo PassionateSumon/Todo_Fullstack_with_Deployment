@@ -9,7 +9,7 @@ import ProtectedRoute from "./common/utils/ProtectedRoute";
 import Otp from "./modules/auth/components/Otp";
 import ResetPassword from "./modules/auth/components/ResetPassword";
 import type { AppDispatch } from "./store/store";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { checkAuthStatus } from "./modules/auth/slices/AuthSlice";
 import HomeLayout from "./common/components/HomeLayout";
 import TaskPage from "./modules/task/pages/TaskPage";
@@ -17,7 +17,10 @@ import AdminDashboard from "./modules/dashboard/components/AdminDashboard";
 import GeneralDashboard from "./modules/dashboard/components/GeneralDashboard";
 import NotFound from "./common/components/NotFound";
 import StatusPage from "./modules/status/pages/StatusPage";
-
+import type { RootState } from "./store/store";
+import InviteUserOrAdmin from "./modules/user/components/InviteUserOrAdmin";
+import Profile from "./modules/user/components/Profile";
+import Landing from "./common/components/Landing";
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -57,7 +60,7 @@ function App() {
       <ToastInit />
 
       <Routes>
-        <Route path="/" element={<h1>Home normal</h1>} />
+        <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -67,8 +70,10 @@ function App() {
           <Route path="/home" element={<HomeLayout />}>
             <Route path="task" element={<TaskPage />} />
             <Route path="status" element={<StatusPage />} />
+            <Route path="invite" element={<InviteUserOrAdmin />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="dashboard/me" element={<GeneralDashboard />} />
+            <Route path="profile" element={<Profile />} />
             <Route index element={<Navigate to="task" replace />} />
           </Route>
         </Route>

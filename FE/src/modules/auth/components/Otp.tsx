@@ -1,21 +1,15 @@
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent, type KeyboardEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { otpSend, otpCheck, clearError } from "../slices/AuthSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
 import { toast } from "react-toastify";
+import { MailCheck, ShieldCheck } from "lucide-react";
 
-// Interface for OTP input
-interface OtpForm {
-  digit1: string;
-  digit2: string;
-  digit3: string;
-  digit4: string;
-}
 
 const Otp = () => {
   const [otpSent, setOtpSent] = useState(false);
-  const [otpForm, setOtpForm] = useState<OtpForm>({
+  const [otpForm, setOtpForm] = useState<any>({
     digit1: "",
     digit2: "",
     digit3: "",
@@ -24,11 +18,8 @@ const Otp = () => {
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { email, loading, error } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { email, loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Show server-side errors as toasts
   useEffect(() => {
     if (error) {
       toast.error(error, { toastId: "otp-error" });
@@ -36,7 +27,6 @@ const Otp = () => {
     }
   }, [error, dispatch]);
 
-  // Handle sending OTP
   const handleSendOtp = async () => {
     if (!email) {
       toast.error("Email is missing. Cannot send OTP.", { toastId: "otp-email-missing" });
@@ -49,99 +39,117 @@ const Otp = () => {
     }
   };
 
-  // Handle OTP input change and auto-focus
-  const handleOtpChange = (
-    e: ChangeEvent<HTMLInputElement>,
-    digit: keyof OtpForm
-  ) => {
+  const handleOtpChange = (e: ChangeEvent<HTMLInputElement>, digit: any) => {
     const value = e.target.value;
     if (/^[0-9]$/.test(value) || value === "") {
-      setOtpForm((prev) => ({ ...prev, [digit]: value }));
+      setOtpForm((prev: any) => ({ ...prev, [digit]: value }));
       const nextInput = e.target.nextElementSibling as HTMLInputElement;
       if (value && nextInput) nextInput.focus();
     }
   };
 
-  // Handle OTP verification
+  const handleKeyDown = (
+    e: KeyboardEvent<HTMLInputElement>,
+    digit: any
+  ) => {
+    const order = ["digit1", "digit2", "digit3", "digit4"] as const;
+    const index = order.indexOf(digit);
+
+    if (e.key === "Backspace") {
+      const currentValue = otpForm[digit];
+
+      // If current box has value, just clear it
+      if (currentValue) {
+        setOtpForm((prev: any) => ({ ...prev, [digit]: "" }));
+      } else if (index > 0) {
+        const prevKey = order[index - 1];
+        setOtpForm((prev: any) => ({ ...prev, [prevKey]: "" }));
+        const prev = ((e.target as any).previousElementSibling as HTMLInputElement);
+        if (prev) prev.focus();
+      }
+    }
+  };
+
   const handleVerifyOtp = async () => {
     const otp = `${otpForm.digit1}${otpForm.digit2}${otpForm.digit3}${otpForm.digit4}`;
     if (otp.length !== 4 || !/^[0-9]{4}$/.test(otp)) {
-      toast.error("Please enter a valid 4-digit OTP", {
-        toastId: "otp-invalid",
-      });
+      toast.error("Please enter a valid 4-digit OTP", { toastId: "otp-invalid" });
       return;
     }
 
     const result = await dispatch(otpCheck({ email: email ?? "", otp }));
     if (otpCheck.fulfilled.match(result)) {
-      toast.success("OTP verified successfully!", {
-        toastId: "otp-verify-success",
-      });
+      toast.success("OTP verified successfully!", { toastId: "otp-verify-success" });
       navigate("/home");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#F5F6FA]">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-96 space-y-6">
-        <h2 className="text-2xl font-bold text-[#1A202C] text-center">
-          OTP Verification
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center px-4">
+      <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-xl space-y-6">
+        <h2 className="text-3xl font-bold text-center text-indigo-700 flex justify-center items-center gap-2">
+          <ShieldCheck className="w-6 h-6" /> OTP Verification
         </h2>
 
-        {/* Display email */}
-        <p className="text-center text-[#1A202C]">
-          An OTP will be sent to <span className="font-semibold">{email}</span>
+        <p className="text-center text-gray-700">
+          {otpSent ? (
+            <>
+              Enter the 4-digit OTP sent to{" "}
+              <span className="font-semibold text-indigo-600">{email}</span>
+            </>
+          ) : (
+            <>
+              We will send an OTP to{" "}
+              <span className="font-semibold text-indigo-600">{email}</span>
+            </>
+          )}
         </p>
 
-        {/* Send OTP Button */}
         {!otpSent ? (
           <button
             onClick={handleSendOtp}
             disabled={loading}
-            className={`w-full bg-[#4C51BF] hover:bg-[#3C426F] transition text-white font-semibold py-3 rounded-lg shadow-md ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`w-full text-white font-semibold py-3 rounded-lg transition shadow-md ${loading ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer "
+              }`}
           >
             {loading ? "Sending..." : "Send OTP"}
           </button>
         ) : (
           <div className="space-y-6">
-            {/* OTP Input Boxes */}
             <div className="flex justify-center space-x-4">
               {["digit1", "digit2", "digit3", "digit4"].map((digit, idx) => (
                 <input
                   key={digit}
                   type="text"
                   maxLength={1}
-                  value={otpForm[digit as keyof OtpForm]}
-                  onChange={(e) => handleOtpChange(e, digit as keyof OtpForm)}
-                  className="w-12 h-12 text-center text-xl border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4C51BF] transition"
+                  autoFocus={idx === 0}
+                  value={otpForm[digit]}
+                  onChange={(e) => handleOtpChange(e, digit)}
+                  onKeyDown={(e) => handleKeyDown(e, digit)}
+                  className="w-12 h-12 text-center text-xl border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
                   aria-label={`OTP digit ${idx + 1}`}
                 />
               ))}
             </div>
 
-            {/* Verify Button */}
             <button
               onClick={handleVerifyOtp}
               disabled={loading}
-              className={`w-full bg-[#4C51BF] hover:bg-[#3C426F] transition text-white font-semibold py-3 rounded-lg shadow-md ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`w-full text-white font-semibold py-3 rounded-lg transition shadow-md ${loading ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer "
+                }`}
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </button>
           </div>
         )}
 
-        {/* Resend OTP Link */}
         {otpSent && (
-          <p className="text-center text-[#1A202C]">
-            Didn’t receive OTP?{" "}
+          <p className="text-center text-sm text-gray-600">
+            Didn’t receive the code?{" "}
             <button
               onClick={handleSendOtp}
-              className="text-[#319795] font-bold"
               disabled={loading}
+              className="text-indigo-600 font-semibold hover:underline cursor-pointer "
             >
               Resend OTP
             </button>

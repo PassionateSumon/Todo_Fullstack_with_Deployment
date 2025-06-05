@@ -137,6 +137,7 @@ const init = async () => {
           "Authorization",
           "Content-Type",
           "If-None-Match",
+          "X-Skip-Loader",
         ],
       },
       state: {

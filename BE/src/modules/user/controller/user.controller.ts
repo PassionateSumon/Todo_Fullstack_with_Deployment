@@ -26,7 +26,8 @@ export const getSingleUserHandler = async (
 ) => {
   try {
     const id = req.params.id as number;
-    const result = await getSingleUserService(id);
+    const { userId } = req.auth.credentials as any;
+    const result = await getSingleUserService(id, userId);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
     return success(result.data, "User fetched successfully", 200)(h);
@@ -52,9 +53,9 @@ export const updateDetailsHandler = async (
   h: ResponseToolkit
 ) => {
   try {
-    const id = req.params.id as number;
+    const {userId} = req.auth.credentials as any;
     const payload = req.payload as { name: string };
-    const result = await updateDetailsService(id, payload);
+    const result = await updateDetailsService(userId, payload);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
     return success(result.data, "User fetched successfully", 200)(h);

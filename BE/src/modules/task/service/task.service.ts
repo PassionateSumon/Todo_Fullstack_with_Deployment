@@ -186,9 +186,9 @@ export const updateTaskService = async (
   }
 ) => {
   try {
-    console.log("id --> ", id);
+    // console.log("id --> ", id);
     const task = await db.Task.findOne({ where: { id } });
-    console.log(JSON.stringify(task));
+    // console.log(JSON.stringify(task));
     if (!task) {
       return {
         statusCode: 404,
@@ -207,7 +207,7 @@ export const updateTaskService = async (
       }
       status_id = statusRecord.id;
     }
-    console.log("status_id: --> ", status_id);
+    // console.log("status_id: --> ", status_id);
 
     const updatedData = {
       task_name: name ? name : task.task_name,
@@ -217,9 +217,9 @@ export const updateTaskService = async (
       start_date: start_date !== undefined ? start_date : task.start_date,
       end_date: end_date !== undefined ? end_date : task.end_date,
     };
-    console.log(updatedData);
+    // console.log(updatedData);
     await db.Task.update(updatedData, { where: { id } });
-    console.log("here");
+    // console.log("here");
     const finalRes = await db.Task.findOne({
       where: { id },
       include: [{ model: db.Status, as: "status", attributes: ["id", "name"] }],

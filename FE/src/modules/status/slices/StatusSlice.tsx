@@ -12,7 +12,9 @@ export const createStatus = createAsyncThunk(
   "status/createStatus",
   async ({ name }: { name: string }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/status/create", { name });
+      const response = await axiosInstance.post("/status/create", { name }, {
+        headers: { "X-Skip-Loader": "true" },
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -39,13 +41,19 @@ export const getAllStatuses = createAsyncThunk(
 
 export const updateStatus = createAsyncThunk(
   "status/updateStatus",
-  async ({ id, name }: { id: number; name: string }, { rejectWithValue }) => {
+  async ({ id, name }: { id: number; name: string }, { rejectWithValue, getState }) => {
     try {
-      const response = await axiosInstance.put("/status/update", { id, name });
+      const response = await axiosInstance.put("/status/update", { id, name }, {
+        headers: { "X-Skip-Loader": "true" },
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update status"
+        {
+          message: error.response?.data?.message || "Failed to update status",
+          previousStatuses: (getState() as any).status.statuses
+
+        }
       );
     }
   }
@@ -53,13 +61,20 @@ export const updateStatus = createAsyncThunk(
 
 export const deleteStatus = createAsyncThunk(
   "status/deleteStatus",
-  async ({ id }: { id: number }, { rejectWithValue }) => {
+  async ({ id }: { id: number }, { rejectWithValue, getState }) => {
     try {
-      const response = await axiosInstance.delete("/status/delete", { data: { id } });
+      const response = await axiosInstance.delete("/status/delete", {
+        data: { id },
+        headers: { "X-Skip-Loader": "true" }
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to delete status"
+        {
+          message: error.response?.data?.message || "Failed to update status",
+          previousStatuses: (getState() as any).status.statuses
+
+        }
       );
     }
   }
@@ -76,20 +91,31 @@ const StatusSlice = createSlice({
   extraReducers: (builder) => {
     // Create Status
     builder
-      .addCase(createStatus.pending, (state) => {
-        state.loading = true;
+      .addCase(createStatus.pending, (state, action: any) => {
+        state.loading = false;
+        const newStatus = {
+          id: Date.now(),
+          name: action.meta.arg.name,
+        }
+        state.statuses.push(newStatus);
         state.error = null;
       })
       .addCase(createStatus.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.statusCode === 200) {
-          state.statuses.push(action.payload.data);
-        } else {
-          state.error = action.payload.message;
+        const createdStatus = action.payload.data;
+        const index = state.statuses.findIndex(
+          (status) => status.id === createdStatus.id
+        );
+        if (index !== -1) {
+          state.statuses[index] = createdStatus;
         }
+        state.error = null;
       })
       .addCase(createStatus.rejected, (state, action) => {
         state.loading = false;
+        state.statuses = state.statuses.filter(
+          (status) => status.id !== Date.now()
+        );
         state.error = action.payload as string;
       });
 
@@ -111,8 +137,14 @@ const StatusSlice = createSlice({
 
     // Update Status
     builder
-      .addCase(updateStatus.pending, (state) => {
-        state.loading = true;
+      .addCase(updateStatus.pending, (state, action: any) => {
+        state.loading = false;
+        const { id, name } = action.meta.arg;
+        const index = state.statuses.findIndex((status) => status.id === id);
+        if (index !== -1) {
+          state.statuses[index] = { ...state.statuses[index], name };
+        }
+
         state.error = null;
       })
       .addCase(updateStatus.fulfilled, (state, action) => {
@@ -129,30 +161,31 @@ const StatusSlice = createSlice({
           state.error = action.payload.message;
         }
       })
-      .addCase(updateStatus.rejected, (state, action) => {
+      .addCase(updateStatus.rejected, (state, action: any) => {
         state.loading = false;
+        state.statuses = action.payload.previousStatuses;
         state.error = action.payload as string;
       });
 
     // Delete Status
     builder
-      .addCase(deleteStatus.pending, (state) => {
+      .addCase(deleteStatus.pending, (state, action: any) => {
         state.loading = true;
+        const { id } = action.meta.arg;
+        state.statuses = state.statuses.filter(
+          (status) => status.id !== id
+        );
         state.error = null;
       })
       .addCase(deleteStatus.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.statusCode === 200) {
-          const deletedId = action.payload.data.id;
-          state.statuses = state.statuses.filter(
-            (status) => status.id !== deletedId
-          );
-        } else {
+        if (action.payload.statusCode !== 200) {
           state.error = action.payload.message;
         }
       })
-      .addCase(deleteStatus.rejected, (state, action) => {
+      .addCase(deleteStatus.rejected, (state, action: any) => {
         state.loading = false;
+        state.statuses = action.payload.previousStatuses;
         state.error = action.payload as string;
       });
   },

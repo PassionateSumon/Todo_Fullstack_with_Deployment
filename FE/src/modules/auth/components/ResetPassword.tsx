@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { resetPassword, clearError } from "../slices/AuthSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
 import { toast } from "react-toastify";
+import { Mail, Lock, KeyRound } from "lucide-react";
 
-// Interface for form data
 interface ResetPasswordForm {
   emailOrUsername: string;
   tempPassword: string;
@@ -23,7 +23,6 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Show server-side errors as toasts
   useEffect(() => {
     if (error) {
       toast.error(error, { toastId: "reset-password-error" });
@@ -31,7 +30,6 @@ const ResetPassword = () => {
     }
   }, [error, dispatch]);
 
-  // Handle input change
   const handleChange = (e: ChangeEvent<HTMLInputElement>, key: keyof ResetPasswordForm) => {
     setFormData((prev) => ({
       ...prev,
@@ -39,11 +37,9 @@ const ResetPassword = () => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async () => {
     const { emailOrUsername, tempPassword, newPassword } = formData;
 
-    // Basic client-side validation
     if (!emailOrUsername || !tempPassword || !newPassword) {
       toast.error("All fields are required.", { toastId: "reset-password-validation" });
       return;
@@ -65,86 +61,85 @@ const ResetPassword = () => {
       toast.success("Password reset successful! Please login.", {
         toastId: "reset-password-success",
       });
-      navigate("/login");
+      navigate("/signin");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#F5F6FA]">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-96 space-y-6">
-        <h2 className="text-2xl font-bold text-[#1A202C] text-center">
-          Reset Password
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl space-y-6">
+        <h2 className="text-3xl font-bold text-center text-indigo-700">Reset Password</h2>
 
-        {/* Email or Username Field */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="emailOrUsername"
-            className="text-lg font-medium text-[#1A202C]"
-          >
+        {/* Email or Username */}
+        <div className="space-y-1">
+          <label htmlFor="emailOrUsername" className="block text-sm font-medium text-gray-700">
             Email or Username
           </label>
-          <input
-            id="emailOrUsername"
-            type="text"
-            value={formData.emailOrUsername}
-            onChange={(e) => handleChange(e, "emailOrUsername")}
-            className="border border-[#E2E8F0] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#4C51BF] transition"
-            aria-label="Email or Username"
-          />
+          <div className="flex items-center border border-gray-300 rounded-lg p-2 focus-within:ring-2 focus-within:ring-indigo-500">
+            <Mail className="w-5 h-5 text-gray-500 mr-2" />
+            <input
+              id="emailOrUsername"
+              type="text"
+              value={formData.emailOrUsername}
+              onChange={(e) => handleChange(e, "emailOrUsername")}
+              className="w-full outline-none text-sm"
+              placeholder="you@example.com"
+            />
+          </div>
         </div>
 
-        {/* Temporary Password Field */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="tempPassword"
-            className="text-lg font-medium text-[#1A202C]"
-          >
+        {/* Temporary Password */}
+        <div className="space-y-1">
+          <label htmlFor="tempPassword" className="block text-sm font-medium text-gray-700">
             Temporary Password
           </label>
-          <input
-            id="tempPassword"
-            type="password"
-            value={formData.tempPassword}
-            onChange={(e) => handleChange(e, "tempPassword")}
-            className="border border-[#E2E8F0] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#4C51BF] transition"
-            aria-label="Temporary Password"
-          />
+          <div className="flex items-center border border-gray-300 rounded-lg p-2 focus-within:ring-2 focus-within:ring-indigo-500">
+            <KeyRound className="w-5 h-5 text-gray-500 mr-2" />
+            <input
+              id="tempPassword"
+              type="password"
+              value={formData.tempPassword}
+              onChange={(e) => handleChange(e, "tempPassword")}
+              className="w-full outline-none text-sm"
+              placeholder="Temporary password"
+            />
+          </div>
         </div>
 
-        {/* New Password Field */}
-        <div className="flex flex-col">
-          <label
-            htmlFor="newPassword"
-            className="text-lg font-medium text-[#1A202C]"
-          >
+        {/* New Password */}
+        <div className="space-y-1">
+          <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
             New Password
           </label>
-          <input
-            id="newPassword"
-            type="password"
-            value={formData.newPassword}
-            onChange={(e) => handleChange(e, "newPassword")}
-            className="border border-[#E2E8F0] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#4C51BF] transition"
-            aria-label="New Password"
-          />
+          <div className="flex items-center border border-gray-300 rounded-lg p-2 focus-within:ring-2 focus-within:ring-indigo-500">
+            <Lock className="w-5 h-5 text-gray-500 mr-2" />
+            <input
+              id="newPassword"
+              type="password"
+              value={formData.newPassword}
+              onChange={(e) => handleChange(e, "newPassword")}
+              className="w-full outline-none text-sm"
+              placeholder="At least 6 characters"
+            />
+          </div>
         </div>
 
-        {/* Reset Button */}
+        {/* Submit */}
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className={`w-full bg-[#4C51BF] hover:bg-[#3C426F] transition text-white font-semibold py-3 rounded-lg shadow-md ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`w-full text-white font-semibold py-3 rounded-lg transition shadow-md ${loading
+              ? "bg-indigo-300 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
         >
           {loading ? "Resetting..." : "Reset Password"}
         </button>
 
         {/* Link to Login */}
-        <p className="text-center text-[#1A202C]">
+        <p className="text-center text-sm text-gray-600">
           Back to{" "}
-          <Link className="text-[#319795] font-bold" to="/signin">
+          <Link to="/login" className="text-indigo-600 font-semibold hover:underline">
             Login
           </Link>
         </p>

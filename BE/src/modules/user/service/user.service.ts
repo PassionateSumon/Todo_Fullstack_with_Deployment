@@ -29,12 +29,16 @@ export const getAllUsersService = async (userId: number) => {
   }
 };
 
-export const getSingleUserService = async (id: number) => {
+export const getSingleUserService = async (
+  id: number | string,
+  userId: number
+) => {
   try {
-    const user = await db.User.findOne(
-      { where: { id } },
-      { exclude: ["password"] }
-    );
+    const currId = id === "null" ? userId : id;
+    const user = await db.User.findOne({
+      where: { id: currId },
+      attributes: { exclude: ["password"] },
+    });
     if (!user) {
       return {
         statusCode: 404,
@@ -58,6 +62,7 @@ export const updateDetailsService = async (
   id: number,
   data: { name: string }
 ) => {
+  // console.log(data)
   try {
     const existedUser = await db.User.findOne({ where: { id } });
     if (!existedUser) {
@@ -92,7 +97,7 @@ export const toggleActiveService = async (id: number) => {
       };
     }
     await db.User.update(
-      { is_active: !existedUser.is_active },
+      { isActive: !existedUser.isActive },
       { where: { id } }
     );
     const finalRes = await db.User.findOne({ where: { id } });

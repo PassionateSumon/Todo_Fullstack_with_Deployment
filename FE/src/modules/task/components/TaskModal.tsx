@@ -24,7 +24,6 @@ import {
 
 import "ckeditor5/ckeditor5.css";
 
-// Add "view-day" to the mode type
 const TaskModal = ({
   isOpen,
   onClose,
@@ -137,7 +136,6 @@ const TaskModal = ({
     };
 
     if (mode === "add") {
-      console.log("add task: --> ", payload);
       const result = await dispatch(createTask(payload));
       if (createTask.fulfilled.match(result)) {
         toast.success("Task created successfully!", {
@@ -161,7 +159,6 @@ const TaskModal = ({
           toastId: "task-update-success",
         });
         onClose();
-        dispatch(getAllTasks({ viewType: getViewType() }));
       }
     }
   };
@@ -184,10 +181,10 @@ const TaskModal = ({
     mode === "add"
       ? "Add New Task"
       : mode === "edit"
-      ? "Edit Task"
-      : mode === "view"
-      ? "View Task"
-      : `Tasks on ${task?.date ? format(task.date, "MMM d, yyyy") : ""}`;
+        ? "Edit Task"
+        : mode === "view"
+          ? "View Task"
+          : `Tasks on ${task?.date ? format(task.date, "MMM d, yyyy") : ""}`;
 
   if (!isOpen) return null;
 
@@ -195,7 +192,7 @@ const TaskModal = ({
     isOpen: boolean;
     mode: string;
     task: any;
-  }): void {}
+  }): void { }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -215,7 +212,6 @@ const TaskModal = ({
           {title}
         </h2>
 
-        {/* For "view-day" mode, show a list of tasks */}
         {isViewDayMode ? (
           <div className="max-h-[400px] overflow-y-auto">
             {(task?.tasks?.length ?? 0) > 0 ? (
@@ -228,7 +224,7 @@ const TaskModal = ({
                       setModalState({ isOpen: true, mode: "view", task: t })
                     }
                   >
-                    <div className="flex justify-between items-center ">
+                    <div className="flex justify-between items-center">
                       <span className="text-[#2D3748] text-sm">
                         {t.task_name}
                       </span>
@@ -238,13 +234,17 @@ const TaskModal = ({
                       <div className="flex items-center gap-2">
                         <button
                           className="cursor-pointer"
-                          onClick={() => handleEditTask(t)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTask(t);
+                          }}
                         >
                           ✏️
                         </button>
                         <button
                           className="cursor-pointer"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleDeleteTask(t.id);
                             onClose();
                           }}
@@ -264,7 +264,6 @@ const TaskModal = ({
           </div>
         ) : (
           <>
-            {/* Existing Form Fields */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label
@@ -281,7 +280,7 @@ const TaskModal = ({
                   onChange={handleChange}
                   disabled={isViewMode}
                   className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                  aria-label="Task Name"
+                  placeholder="Enter task name"
                 />
               </div>
               <div>
@@ -297,11 +296,10 @@ const TaskModal = ({
                   value={formData.status}
                   onChange={handleChange}
                   disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF] disabled:bg-[#F9FAFB]"
-                  aria-label="Task Status"
+                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
                 >
-                  <option value="">Select Status</option>
-                  {statuses.map((status) => (
+                  <option value="">Select status</option>
+                  {statuses.map((status: string) => (
                     <option key={status} value={status}>
                       {status}
                     </option>
@@ -321,10 +319,9 @@ const TaskModal = ({
                   value={formData.priority}
                   onChange={handleChange}
                   disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors bg-[#FFFFFF] disabled:bg-[#F9FAFB]"
-                  aria-label="Task Priority"
+                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
                 >
-                  <option value="">Select Priority</option>
+                  <option value="">Select priority</option>
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
@@ -345,7 +342,6 @@ const TaskModal = ({
                   onChange={handleChange}
                   disabled={isViewMode}
                   className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                  aria-label="Start Date"
                 />
               </div>
               <div>
@@ -363,7 +359,6 @@ const TaskModal = ({
                   onChange={handleChange}
                   disabled={isViewMode}
                   className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                  aria-label="End Date"
                 />
               </div>
             </div>
@@ -374,77 +369,104 @@ const TaskModal = ({
               >
                 Description
               </label>
-              <CKEditor
-                editor={ClassicEditor}
-                data={formData.description}
-                onChange={(event, editor) => {
-                  const data = editor.getData() || "";
-                  setFormData((prev) => ({ ...prev, description: data }));
-                }}
-                disabled={isViewMode}
-                config={{
-                  licenseKey: "GPL",
-                  language: {
-                    ui: "en",
-                    content: "en",
-                  },
-                  toolbar: [
-                    "undo",
-                    "redo",
-                    "|",
-                    "heading",
-                    "|",
-                    "bold",
-                    "italic",
-                    "|",
-                    "link",
-                    "insertTable",
-                    "|",
-                    "bulletedList",
-                    "numberedList",
-                    "indent",
-                    "outdent",
-                  ],
-                  plugins: [
-                    Bold,
-                    Essentials,
-                    Heading,
-                    Indent,
-                    IndentBlock,
-                    Italic,
-                    Link,
-                    List,
-                    MediaEmbed,
-                    Paragraph,
-                    Table,
-                    Undo,
-                  ],
-                  initialData: "",
-                }}
-              />
+              {isViewMode ? (
+                <div
+                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm bg-[#F9FAFB] min-h-[100px]"
+                  dangerouslySetInnerHTML={{ __html: formData.description }}
+                />
+              ) : (
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={formData.description}
+                  onChange={(event, editor) => {
+                    const data = editor.getData();
+                    setFormData((prev) => ({ ...prev, description: data }));
+                  }}
+                  config={{
+                    toolbar: [
+                      "undo",
+                      "redo",
+                      "|",
+                      "heading",
+                      "|",
+                      "bold",
+                      "italic",
+                      "|",
+                      "link",
+                      "insertTable",
+                      "mediaEmbed",
+                      "|",
+                      "bulletedList",
+                      "numberedList",
+                      "indent",
+                      "outdent",
+                    ],
+                    plugins: [
+                      Bold,
+                      Essentials,
+                      Heading,
+                      Indent,
+                      IndentBlock,
+                      Italic,
+                      Link,
+                      List,
+                      MediaEmbed,
+                      Paragraph,
+                      Table,
+                      Undo,
+                    ],
+                    initialData: "",
+                  }}
+                />
+              )}
             </div>
-
             {error && (
-              <p className="text-[#E53E3E] text-center text-xs mb-3">{error}</p>
+              <p className="text-[#E53E3E] text-sm text-center mb-4">{error}</p>
             )}
-            <div className="flex justify-end px-2">
-              {mode !== "view" && (
+            <div className="flex justify-between gap-2">
+              {(mode === "view" || mode === "edit") && task?.id && (
                 <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className={`bg-[#5A67D8] text-[#FFFFFF] font-medium text-sm py-1.5 px-5 rounded-md border-none transition-colors cursor-pointer ${
-                    loading
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-[#434190]"
-                  }`}
+                  onClick={() => {
+                    handleDeleteTask(task.id);
+                    onClose();
+                  }}
+                  className="bg-[#E53E3E] hover:bg-[#C53030] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
                 >
-                  {loading
-                    ? "Submitting..."
-                    : mode === "add"
-                    ? "Add Task"
-                    : "Update Task"}
+                  Delete
                 </button>
               )}
+              <div className="flex gap-2 ml-auto">
+                {mode === "view" && task?.id && (
+                  <button
+                    onClick={() => handleEditTask(task)}
+                    className="bg-[#5A67D8] hover:bg-[#434190] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                )}
+                {(mode === "add" || mode === "edit") && (
+                  <>
+                    <button
+                      onClick={handleOnClose}
+                      className="bg-[#EDF2F7] hover:bg-[#E2E8F0] text-[#2D3748] font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className={`bg-[#5A67D8] hover:bg-[#434190] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer ${loading ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                    >
+                      {loading
+                        ? "Saving..."
+                        : mode === "add"
+                          ? "Create Task"
+                          : "Update Task"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </>
         )}

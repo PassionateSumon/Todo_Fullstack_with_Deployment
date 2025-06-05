@@ -21,10 +21,7 @@ const getDashBoardService = async () => {
     const tasksByStatusRaw = await Status.findAll({
       attributes: ["id", "name"],
       include: [{ model: db.Task, as: "tasks" }],
-      // group: ["Status.id", "Status.name"],
-      // raw: true,
     });
-    // console.log(JSON.stringify(tasksByStatusRaw));
 
     // 4. Tasks grouped by priority
     const tasksByPriorityRaw = await Task.findAll({
@@ -270,6 +267,13 @@ const getDashBoardService = async () => {
       distinct: true,
     });
 
+    // 16. all users with isActive status
+    const allIsActiveUsers = await User.findAll({
+      where: { user_type: "user" },
+      attributes: ["id", "name", "email", "isActive"],
+    });
+    // console.log(JSON.stringify(allIsActiveUsers));
+
     // Format response
     const dashboardData: any = {
       activeUsers: activeUsersCount,
@@ -299,6 +303,7 @@ const getDashBoardService = async () => {
         : null,
       statusTrends,
       activeUsersLast30Days,
+      allIsActiveUsers,
     };
 
     return {

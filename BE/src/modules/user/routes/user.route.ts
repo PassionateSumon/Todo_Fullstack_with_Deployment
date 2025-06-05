@@ -7,6 +7,7 @@ import {
   updateDetailsHandler,
 } from "../controller/user.controller";
 import { JWTUtil } from "common/utils/JWTUtils";
+import { error } from "common/utils/returnFunctions";
 
 const prefix = "/user";
 export default [
@@ -22,7 +23,7 @@ export default [
   },
   {
     method: "GET",
-    path: `${prefix}/single/:id`,
+    path: `${prefix}/single/{id}`,
     handler: getSingleUserHandler,
     options: {
       auth: "jwt_access",
@@ -32,7 +33,7 @@ export default [
   },
   {
     method: "PUT",
-    path: `${prefix}/update/:id`,
+    path: `${prefix}/update`,
     handler: updateDetailsHandler,
     options: {
       auth: "jwt_access",
@@ -41,7 +42,11 @@ export default [
       validate: {
         payload: Joi.object({
           name: Joi.string().required(),
-        }),
+        })
+      },
+      payload: {
+        parse: true,
+        output: "data",
       },
     },
   },
@@ -57,12 +62,12 @@ export default [
       payload: {
         parse: true,
         output: "data",
-      }
-    }
+      },
+    },
   },
   {
     method: "DELETE",
-    path: `${prefix}/delete/:id`,
+    path: `${prefix}/delete/{id}`,
     handler: deleteUserHandler,
     options: {
       auth: "jwt_access",
