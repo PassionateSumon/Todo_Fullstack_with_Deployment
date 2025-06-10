@@ -4,10 +4,9 @@ import {
   ResetPasswordPayload,
   signupPayload,
 } from "../../../common/interfaces/User.interface";
-import { CryptoUtil } from "../../../common/utils/Crypto";
 import { db } from "../../../config/db";
 import { queueEmail } from "./emailQueue.service";
-import { JWTUtil } from "common/utils/JWTUtils";
+import { JWTUtil } from "../../../common/utils/JWTUtils";
 
 // send invite email
 const sendInviteEmail = async (user: any, tempPassword: string) => {
@@ -52,7 +51,6 @@ export const signupService = async ({
       };
     }
 
-    const hashedPassword = CryptoUtil.hashPassword(password, "10");
     const username = Math.floor(Math.random() * 1000000).toString();
 
     if (!user_type) {
@@ -63,7 +61,7 @@ export const signupService = async ({
       name,
       email,
       username,
-      password: hashedPassword,
+      password,
       isActive: true,
       user_type,
       is_reset_password: false,
@@ -134,11 +132,12 @@ export const loginService = async (
       };
     }
 
-    const isPasswordMatch = CryptoUtil.verifyPassword(
-      password,
-      "10",
-      isExistUser.password
-    );
+    // const check = await bcrypt.
+    console.log(password);
+    console.log(isExistUser.password);
+    // console.log(check)
+
+    const isPasswordMatch = password === isExistUser.password;
 
     if (!isPasswordMatch) {
       return {
@@ -152,41 +151,6 @@ export const loginService = async (
         message: "Please reset your password",
       };
     }
-
-    const accessToken = JWTUtil.generateAccessToken(
-      isExistUser.id,
-      isExistUser.user_type
-    );
-    const refreshToken = JWTUtil.generateRefreshToken(
-      isExistUser.id,
-      isExistUser.user_type
-    );
-
-    try {
-      await db.RefreshToken.create({
-        token: refreshToken,
-        userId: isExistUser.id,
-      });
-      // console.log(res)
-    } catch (err: any) {
-      console.log(err);
-      return {
-        statusCode: 500,
-        message: "Internal server error for creating refresh token",
-      };
-    }
-
-    h.state("accessToken", accessToken, {
-      path: "/",
-      isHttpOnly: true,
-      ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
-      // ttl: 1 * 60 * 1000, // 1 minute
-    });
-    h.state("refreshToken", refreshToken, {
-      path: "/",
-      isHttpOnly: true,
-      ttl: 7 * 24 * 60 * 60 * 1000, // 7 day
-    });
 
     return {
       statusCode: 200,
@@ -244,7 +208,11 @@ export const otpSendService = async (email: string) => {
   }
 };
 
-export const otpCheckService = async (email: string, otp: string) => {
+export const otpCheckService = async (
+  email: string,
+  otp: string,
+  h: ResponseToolkit
+) => {
   try {
     const user = await db.User.findOne({
       where: { email },
@@ -271,6 +239,42 @@ export const otpCheckService = async (email: string, otp: string) => {
     const updatedUser = await db.User.findOne({
       where: { email },
       attributes: { exclude: ["password"] },
+    });
+
+    const accessToken = JWTUtil.generateAccessToken(
+      updatedUser.id,
+      updatedUser.user_type
+    );
+    const refreshToken = JWTUtil.generateRefreshToken(
+      updatedUser.id,
+      updatedUser.user_type
+    );
+
+    try {
+      await db.RefreshToken.create({
+        token: refreshToken,
+        userId: updatedUser.id,
+      });
+      // console.log(res)
+    } catch (err: any) {
+      console.log(err);
+      return {
+        statusCode: 500,
+        message: "Internal server error for creating refresh token",
+      };
+    }
+
+    h.state("accessToken", accessToken, {
+      path: "/",
+      isHttpOnly: true,
+      ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+      // ttl: 1 * 60 * 1000, // 1 minute
+    });
+    h.state("refreshToken", refreshToken, {
+      path: "/",
+      isHttpOnly: true,
+      encoding: "base64",
+      ttl: 7 * 24 * 60 * 60 * 1000, // 7 day
     });
 
     return {
@@ -400,11 +404,9 @@ export const resetPasswordService = async ({
       };
     }
 
-    const isPasswordMatch = CryptoUtil.verifyPassword(
-      tempPassword,
-      "10",
-      isExistUser.password
-    );
+    console.log(tempPassword);
+    console.log(isExistUser.password);
+    const isPasswordMatch = tempPassword === isExistUser.password;
 
     if (!isPasswordMatch) {
       return {
@@ -413,13 +415,13 @@ export const resetPasswordService = async ({
       };
     }
 
-    const hashedPassword = CryptoUtil.hashPassword(newPassword, "10");
     await db.User.update(
-      { password: hashedPassword, is_reset_password: true },
+      { password: newPassword, is_reset_password: true },
       { where: { id: isExistUser.id } }
     );
 
     return {
+      statusCode: 200,
       message: "Password reset successfully",
       user: {
         id: isExistUser.id,

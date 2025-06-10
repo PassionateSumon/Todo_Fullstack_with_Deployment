@@ -1,5 +1,5 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
-import { error, success } from "common/utils/returnFunctions";
+import { error, success } from "../../../common/utils/returnFunctions";
 import {
   createstatusService,
   deleteStatusService,

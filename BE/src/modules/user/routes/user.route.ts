@@ -6,8 +6,7 @@ import {
   toggleActiveHandler,
   updateDetailsHandler,
 } from "../controller/user.controller";
-import { JWTUtil } from "common/utils/JWTUtils";
-import { error } from "common/utils/returnFunctions";
+import { JWTUtil } from "../../../common/utils/JWTUtils";
 
 const prefix = "/user";
 export default [

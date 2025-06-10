@@ -5,6 +5,7 @@ import { resetPassword, clearError } from "../slices/AuthSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
 import { toast } from "react-toastify";
 import { Mail, Lock, KeyRound } from "lucide-react";
+import { Hash } from "../../../common/utils/Hash";
 
 interface ResetPasswordForm {
   emailOrUsername: string;
@@ -45,15 +46,11 @@ const ResetPassword = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters long.", {
-        toastId: "reset-password-length",
-      });
-      return;
-    }
+    // const hashedTemppassword = await Hash.hashPassword(tempPassword);
+    const hashedNewPassword = await Hash.hashPassword(newPassword);
 
     const result = await dispatch(
-      resetPassword({ emailOrUsername, tempPassword, newPassword })
+      resetPassword({ emailOrUsername, tempPassword, newPassword: hashedNewPassword })
     );
 
     if (resetPassword.fulfilled.match(result)) {
@@ -61,7 +58,7 @@ const ResetPassword = () => {
       toast.success("Password reset successful! Please login.", {
         toastId: "reset-password-success",
       });
-      navigate("/signin");
+      navigate("/login");
     }
   };
 
@@ -129,8 +126,8 @@ const ResetPassword = () => {
           onClick={handleSubmit}
           disabled={loading}
           className={`w-full text-white font-semibold py-3 rounded-lg transition shadow-md ${loading
-              ? "bg-indigo-300 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700"
+            ? "bg-indigo-300 cursor-not-allowed"
+            : "bg-indigo-600 hover:bg-indigo-700"
             }`}
         >
           {loading ? "Resetting..." : "Reset Password"}

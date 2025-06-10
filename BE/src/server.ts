@@ -7,7 +7,7 @@ import { registerSwagger } from "./plugins/swagger.plugin";
 import { ApiError } from "./common/utils/ApiError";
 import { statusCodes } from "./common/constants/constants";
 import { db, connectDB } from "./config/db";
-import routesPlugin from "plugins/routes.plugin";
+import routesPlugin from "./plugins/routes.plugin";
 dotenv.config();
 
 const requiredEnvVars = [
@@ -97,7 +97,7 @@ const validateRefresh = async (req: Hapi.Request) => {
       );
     }
 
-    const user = await db.user.findOne({
+    const user = await db.User.findOne({
       where: { id: decoded.userId },
     });
     if (!user || !user.isActive) {

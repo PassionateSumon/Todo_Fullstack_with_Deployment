@@ -3,7 +3,7 @@ import {
   Lock,
   Mail,
   User,
-} from "lucide-react"; // Install: npm i lucide-react
+} from "lucide-react";
 import { useState, type ChangeEvent, type FC, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import { login, signup, clearError } from "../slices/AuthSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import type { AuthProps, FormData } from "../types/Auth.interface";
 import { toast } from "react-toastify";
+import { Hash } from "../../../common/utils/Hash";
 
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -98,16 +99,18 @@ const Auth: FC<AuthProps> = ({ from }) => {
     setFieldErrors(newErrors);
     if (Object.values(newErrors).some((err) => err)) return;
 
+    const hashedPassword = await Hash.hashPassword(formData.password);
+
     const action = from === "signup"
       ? signup({
         name: formData.name!,
         email: formData.email!,
-        password: formData.password,
+        password: hashedPassword,
         user_type: formData.user_type,
       })
       : login({
         emailOrUsername: formData.emailOrUsername,
-        password: formData.password,
+        password: hashedPassword,
       });
 
     // @ts-expect-error: dispatch type mismatch for async thunk
@@ -179,7 +182,7 @@ const Auth: FC<AuthProps> = ({ from }) => {
           {loading ? "Please wait..." : "Submit"}
         </button>
 
-        <p className="text-sm text-center text-gray-600">
+        <span className="text-sm text-center text-gray-600">
           {from === "signup" ? (
             <>
               Already have an account?{" "}
@@ -204,7 +207,7 @@ const Auth: FC<AuthProps> = ({ from }) => {
 
             </div>
           )}
-        </p>
+        </span>
       </div>
     </div>
   );

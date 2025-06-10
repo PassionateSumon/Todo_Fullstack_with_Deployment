@@ -102,11 +102,16 @@ const StatusSlice = createSlice({
       })
       .addCase(createStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const createdStatus = action.payload.data;
+        // console.log(action.payload)
+        const createdStatus = action.payload;
         const index = state.statuses.findIndex(
-          (status) => status.id === createdStatus.id
+          (status) => {
+            // console.log(JSON.parse(JSON.stringify(status)));
+            return status.id === createdStatus.id
+          }
         );
         if (index !== -1) {
+          // console.log("here")
           state.statuses[index] = createdStatus;
         }
         state.error = null;

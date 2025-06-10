@@ -6,7 +6,7 @@ import {
   getSingleTaskService,
   updateTaskService,
 } from "../service/task.service";
-import { error, success } from "common/utils/returnFunctions";
+import { error, success } from "../../../common/utils/returnFunctions";
 
 export const createTaskHandler = async (req: Request, h: ResponseToolkit) => {
   try {

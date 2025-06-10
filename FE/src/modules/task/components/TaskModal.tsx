@@ -383,6 +383,7 @@ const TaskModal = ({
                     setFormData((prev) => ({ ...prev, description: data }));
                   }}
                   config={{
+                    licenseKey: "GPL",
                     toolbar: [
                       "undo",
                       "redo",

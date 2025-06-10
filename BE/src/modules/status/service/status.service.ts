@@ -1,4 +1,4 @@
-import { db } from "config/db";
+import { db } from "../../../config/db";
 
 export const createstatusService = async ({ name }: { name: string }) => {
   try {

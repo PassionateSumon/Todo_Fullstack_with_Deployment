@@ -4,7 +4,7 @@ import {
   dashBoardHandlerForUser,
 } from "../controller/dashboard.controller";
 import Joi from "joi";
-import { JWTUtil } from "common/utils/JWTUtils";
+import { JWTUtil } from "../../../common/utils/JWTUtils";
 
 // const prefix = "/admin";
 

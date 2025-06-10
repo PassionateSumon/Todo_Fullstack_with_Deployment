@@ -1,6 +1,5 @@
-import { db } from "config/db";
-import { statusCodes } from "common/constants/constants";
-import { where } from "sequelize";
+import { db } from "../../../config/db";
+import { statusCodes } from "../../../common/constants/constants";
 
 const priorities = ["high", "medium", "low"];
 

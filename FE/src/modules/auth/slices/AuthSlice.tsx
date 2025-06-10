@@ -143,7 +143,6 @@ const AuthSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action: any) => {
         state.loading = false;
-        state.isLoggedIn = true;
         // console.log(action.payload);
         state.email = action.payload?.email;
         state.role = action.payload?.role;
@@ -198,6 +197,7 @@ const AuthSlice = createSlice({
         state.error = null;
       })
       .addCase(otpCheck.fulfilled, (state) => {
+        state.isLoggedIn = true;
         state.loading = false;
       })
       .addCase(otpCheck.rejected, (state, action) => {

@@ -1,4 +1,4 @@
-import { error, success } from "common/utils/returnFunctions";
+import { error, success } from "../../../common/utils/returnFunctions";
 import {
   deleteUserService,
   getAllUsersService,

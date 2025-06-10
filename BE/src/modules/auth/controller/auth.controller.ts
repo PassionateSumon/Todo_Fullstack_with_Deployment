@@ -68,7 +68,7 @@ export const otpCheckHandler = async (req: Request, h: ResponseToolkit) => {
       email: string;
       otp: string;
     };
-    const result = await otpCheckService(email, otp);
+    const result = await otpCheckService(email, otp, h);
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
 
@@ -97,6 +97,9 @@ export const resetPasswordHandler = async (
   try {
     const payload = req.payload as ResetPasswordPayload;
     const result = await resetPasswordService(payload);
+    if (result.statusCode !== 200 && result.statusCode !== 201) {
+      return error(null, result.message, result.statusCode)(h);
+    }
     return success(result, "Password reset successfully", 200)(h);
   } catch (err: any) {
     return error(null, err.message || "Internal server error", 500)(h);

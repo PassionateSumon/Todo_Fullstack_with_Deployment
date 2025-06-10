@@ -80,7 +80,7 @@ const Otp = () => {
     const result = await dispatch(otpCheck({ email: email ?? "", otp }));
     if (otpCheck.fulfilled.match(result)) {
       toast.success("OTP verified successfully!", { toastId: "otp-verify-success" });
-      navigate("/home");
+      navigate("/home/task", { replace: true });
     }
   };
 

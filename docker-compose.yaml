@@ -1,0 +1,49 @@
+services:
+  backend:
+    build: ./BE
+    container_name: backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./BE/.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:latest
+    container_name: database
+    ports:
+      - "3307:3306"
+    env_file:
+      - ./BE/.env
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  frontend:
+    build: ./FE
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./FE/.env
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
+    driver: bridge

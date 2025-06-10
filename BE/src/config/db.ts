@@ -7,11 +7,11 @@ import Status from "../models/status.model";
 import RefreshToken from "../models/refreshToken.model";
 dotenv.config();
 
-const { DB_NAME, DB_USERNAME, DB_PASSWORD } = process.env as any;
+const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT } = process.env as any;
 
-export const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
-  host: "localhost",
-  port: 3306,
+export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST || "mysql",
+  port: DB_PORT || 3306,
   dialect: "mysql",
   logging: false,
 });
