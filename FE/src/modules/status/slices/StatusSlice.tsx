@@ -94,7 +94,8 @@ const StatusSlice = createSlice({
       .addCase(createStatus.pending, (state, action: any) => {
         state.loading = false;
         const newStatus = {
-          id: Date.now(),
+          // id: Date.now(),
+          id: action.meta.requestId,
           name: action.meta.arg.name,
         }
         state.statuses.push(newStatus);
@@ -119,7 +120,7 @@ const StatusSlice = createSlice({
       .addCase(createStatus.rejected, (state, action) => {
         state.loading = false;
         state.statuses = state.statuses.filter(
-          (status) => status.id !== Date.now()
+          (status) => status.id !== Number(action.meta.requestId)
         );
         state.error = action.payload as string;
       });

@@ -47,7 +47,7 @@ export default [
   },
   {
     method: "GET",
-    path: `${prefix}/single/:id`,
+    path: `${prefix}/single/{id}`,
     handler: getSingleTaskHandler,
     options: {
       auth: "jwt_access",

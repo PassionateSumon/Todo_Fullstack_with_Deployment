@@ -696,7 +696,8 @@ const TaskSlice = createSlice({
       .addCase(createTask.pending, (state, action: any) => {
         state.loading = false;
         const newTask: any = {
-          id: Date.now(),
+          // id: Date.now(),
+          id: action.meta.requestId,
           task_name: action.meta.arg.name,
           task_description: action.meta.arg.description,
           status: { id: 0, name: action.meta.arg.status },
@@ -704,6 +705,7 @@ const TaskSlice = createSlice({
           start_date: action.meta.arg.start_date,
           end_date: action.meta.arg.end_date,
         };
+        console.log("line 708 - newTask:- ", newTask)
         if (Array.isArray(state.tasks)) {
           state.tasks.push(newTask);
         } else {
@@ -736,8 +738,8 @@ const TaskSlice = createSlice({
           }
           state.tasks[status] = state.tasks[status]
             ? state.tasks[status].map((task: Task) =>
-                task.id === Date.now() ? newTask : task
-              )
+              task.id === Date.now() ? newTask : task
+            )
             : [newTask];
         }
       })
@@ -814,18 +816,18 @@ const TaskSlice = createSlice({
               if (taskToMove) {
                 state.tasks[payload.status] = state.tasks[payload.status]
                   ? [
-                      ...state.tasks[payload.status],
-                      {
-                        ...taskToMove,
-                        ...payload,
-                      },
-                    ]
+                    ...state.tasks[payload.status],
+                    {
+                      ...taskToMove,
+                      ...payload,
+                    },
+                  ]
                   : [
-                      {
-                        ...taskToMove,
-                        ...payload,
-                      },
-                    ];
+                    {
+                      ...taskToMove,
+                      ...payload,
+                    },
+                  ];
               } else {
                 console.warn(
                   `Task with id ${id} not found in old status ${oldStatus}`
