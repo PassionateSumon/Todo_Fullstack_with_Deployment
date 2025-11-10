@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon --ext ts --exec tsx ./src/server.ts",
     "build": "tsc && tsc-esm-fix --target dist",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "render-build": "npm install && npm run build && npm run migrate"
   },
   "keywords": [],
   "author": "",
