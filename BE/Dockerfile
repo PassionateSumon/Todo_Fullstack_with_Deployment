@@ -18,6 +18,9 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+# Install netcat for database wait script
+RUN apk add --no-cache netcat-openbsd
+
 COPY package*.json ./
 
 RUN npm install --only=production
