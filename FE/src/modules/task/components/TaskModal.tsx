@@ -48,11 +48,12 @@ const TaskModal = ({
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log('task --> ', task)
     if (task && (mode === "edit" || mode === "view")) {
       setFormData({
         name: task.task_name || "",
         description: task.task_description || "",
-        status: task.status?.name || "",
+        status: typeof task?.status === 'string' ? task.status : (task?.status?.name || ""),
         priority: task.priority || "",
         start_date: task.start_date ? task.start_date.split("T")[0] : "",
         end_date: task.end_date ? task.end_date.split("T")[0] : "",
@@ -109,6 +110,7 @@ const TaskModal = ({
   };
 
   const handleSubmit = async () => {
+    console.log('formdata --> ', formData)
     if (!formData.name || !formData.status) {
       toast.error("Task name and status are required.", {
         toastId: "task-validation",
@@ -192,7 +194,7 @@ const TaskModal = ({
     isOpen: boolean;
     mode: string;
     task: any;
-  }): void { }
+  }): void { console.log(arg) }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">

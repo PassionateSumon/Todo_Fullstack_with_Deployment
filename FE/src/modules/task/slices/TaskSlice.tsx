@@ -784,6 +784,7 @@ const TaskSlice = createSlice({
       .addCase(updateTask.pending, (state: any, action: any) => {
         // state.loading = false;
         const { id, payload } = action.meta.arg;
+        console.log(payload)
         if (Array.isArray(state.tasks)) {
           const index = state.tasks.findIndex((task: any) => task.id === id);
           if (index !== -1) {
