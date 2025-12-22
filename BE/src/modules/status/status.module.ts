@@ -1,4 +1,4 @@
-import routes from "./routes/status.route";
+import routes from "./routes/status.route.js";
 
 const StatusModule = {
   name: "status",

@@ -1,11 +1,11 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
-import { error, success } from "../../../common/utils/returnFunctions";
+import { error, success } from "../../../common/utils/returnFunctions.js";
 import {
   createstatusService,
   deleteStatusService,
   getAllStatusService,
   updateStatusService,
-} from "../service/status.service";
+} from "../service/status.service.js";
 
 export const createStatusHandler = async (req: Request, h: ResponseToolkit) => {
   try {

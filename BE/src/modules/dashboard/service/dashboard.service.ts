@@ -1,5 +1,5 @@
-import { db } from "../../../config/db";
-import { statusCodes } from "../../../common/constants/constants";
+import { db } from "../../../config/db.js";
+import { statusCodes } from "../../../common/constants/constants.js";
 
 const priorities = ["high", "medium", "low"];
 

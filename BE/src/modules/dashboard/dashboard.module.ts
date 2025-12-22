@@ -1,4 +1,4 @@
-import routes from "./routes/dashboard.route";
+import routes from "./routes/dashboard.route.js";
 
 const DashboardModule = {
   name: "dashboard",

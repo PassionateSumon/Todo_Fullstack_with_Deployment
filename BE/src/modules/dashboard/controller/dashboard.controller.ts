@@ -1,6 +1,6 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
-import { error, success } from "../../../common/utils/returnFunctions";
-import { getDashBoardService, getDashBoardServiceForUser } from "../service/dashboard.service";
+import { error, success } from "../../../common/utils/returnFunctions.js";
+import { getDashBoardService, getDashBoardServiceForUser } from "../service/dashboard.service.js";
 
 export const dashBoardHandler = async (req: Request, h: ResponseToolkit) => {
   try {

@@ -1,8 +1,8 @@
-import AuthModule from "../modules/auth/auth.module";
-import DashboardModule from "../modules/dashboard/dashboard.module";
-import StatusModule from "../modules/status/status.module";
-import TaskModule from "../modules/task/task.module";
-import UserModule from "../modules/user/user.module";
+import AuthModule from "../modules/auth/auth.module.js";
+import DashboardModule from "../modules/dashboard/dashboard.module.js";
+import StatusModule from "../modules/status/status.module.js";
+import TaskModule from "../modules/task/task.module.js";
+import UserModule from "../modules/user/user.module.js";
 
 export default {
   name: "app-routes",

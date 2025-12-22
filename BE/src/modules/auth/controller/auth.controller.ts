@@ -3,7 +3,7 @@ import {
   LoginPayload,
   ResetPasswordPayload,
   signupPayload,
-} from "../../../common/interfaces/User.interface";
+} from "../../../common/interfaces/User.interface.js";
 import {
   loginService,
   logoutService,
@@ -13,8 +13,8 @@ import {
   refreshService,
   resetPasswordService,
   signupService,
-} from "../service/auth.service";
-import { error, success } from "../../../common/utils/returnFunctions";
+} from "../service/auth.service.js";
+import { error, success } from "../../../common/utils/returnFunctions.js";
 
 export const signupHandler = async (req: Request, h: ResponseToolkit) => {
   try {

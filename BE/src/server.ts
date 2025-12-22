@@ -1,13 +1,13 @@
-import Hapi from "@hapi/hapi";
+import Hapi, { Request } from "@hapi/hapi";
 import dotenv from "dotenv";
 import Jwt from "@hapi/jwt";
 import Cookie from "@hapi/cookie";
 import jwt from "jsonwebtoken";
-import { registerSwagger } from "./plugins/swagger.plugin";
-import { ApiError } from "./common/utils/ApiError";
-import { statusCodes } from "./common/constants/constants";
-import { db, connectDB } from "./config/db";
-import routesPlugin from "./plugins/routes.plugin";
+import { registerSwagger } from "./plugins/swagger.plugin.js";
+import { ApiError } from "./common/utils/ApiError.js";
+import { statusCodes } from "./common/constants/constants.js";
+import { db, connectDB } from "./config/db.js";
+import routesPlugin from "./plugins/routes.plugin.js";
 dotenv.config();
 
 const requiredEnvVars = [
@@ -189,7 +189,7 @@ const init = async () => {
 
   server.auth.default("jwt_access");
 
-  server.events.on("response", function (req) {
+  server.events.on("response", function (req: Request) {
     console.log(
       `${req.info.remoteAddress}: ${req.method.toUpperCase()} ${req.path} --> ${
         (req.response as any).statusCode
@@ -211,7 +211,7 @@ const init = async () => {
   }
 };
 
-process.on("unhandledRejection", (err) => {
+process.on("unhandledRejection", (err: unknown) => {
   console.log(err);
   process.exit(1);
 });

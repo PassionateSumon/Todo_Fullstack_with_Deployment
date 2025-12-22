@@ -1,11 +1,11 @@
-import { error, success } from "../../../common/utils/returnFunctions";
+import { error, success } from "../../../common/utils/returnFunctions.js";
 import {
   deleteUserService,
   getAllUsersService,
   getSingleUserService,
   toggleActiveService,
   updateDetailsService,
-} from "../service/user.service";
+} from "../service/user.service.js";
 import { Request, ResponseToolkit } from "@hapi/hapi";
 
 export const getAllUsersHandler = async (req: Request, h: ResponseToolkit) => {

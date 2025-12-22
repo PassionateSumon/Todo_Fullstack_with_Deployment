@@ -1,4 +1,4 @@
-import routes from "./routes/auth.route";
+import routes from "./routes/auth.route.js";
 
 const AuthModule = {
   name: "auth",

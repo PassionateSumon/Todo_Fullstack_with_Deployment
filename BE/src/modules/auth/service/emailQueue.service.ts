@@ -1,6 +1,6 @@
 import * as nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { EmailJob } from "../../../common/interfaces/Email.interface";
+import { EmailJob } from "../../../common/interfaces/Email.interface.js";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({

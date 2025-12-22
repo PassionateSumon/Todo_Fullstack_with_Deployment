@@ -1,10 +1,10 @@
 import { Sequelize } from "sequelize";
 import { DataType } from "sequelize-typescript";
 import dotenv from "dotenv";
-import User from "../models/user.model";
-import Task from "../models/task.model";
-import Status from "../models/status.model";
-import RefreshToken from "../models/refreshToken.model";
+import User from "../models/user.model.js";
+import Task from "../models/task.model.js";
+import Status from "../models/status.model.js";
+import RefreshToken from "../models/refreshToken.model.js";
 dotenv.config();
 
 const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT } = process.env as any;

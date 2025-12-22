@@ -5,7 +5,7 @@ import {
   getAllTaskHandler,
   getSingleTaskHandler,
   updateTaskHandler,
-} from "../controller/task.controller";
+} from "../controller/task.controller.js";
 import { Request, ResponseToolkit } from "@hapi/hapi";
 
 const prefix = "/task";

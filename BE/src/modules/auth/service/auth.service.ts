@@ -3,10 +3,10 @@ import {
   LoginPayload,
   ResetPasswordPayload,
   signupPayload,
-} from "../../../common/interfaces/User.interface";
-import { db } from "../../../config/db";
-import { queueEmail } from "./emailQueue.service";
-import { JWTUtil } from "../../../common/utils/JWTUtils";
+} from "../../../common/interfaces/User.interface.js";
+import { db } from "../../../config/db.js";
+import { queueEmail } from "./emailQueue.service.js";
+import { JWTUtil } from "../../../common/utils/JWTUtils.js";
 
 // send invite email
 const sendInviteEmail = async (user: any, tempPassword: string) => {

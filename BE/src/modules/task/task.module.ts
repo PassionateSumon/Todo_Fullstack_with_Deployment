@@ -1,4 +1,4 @@
-import routes from "./routes/task.route";
+import routes from "./routes/task.route.js";
 
 const TaskModule = {
   name: "task",

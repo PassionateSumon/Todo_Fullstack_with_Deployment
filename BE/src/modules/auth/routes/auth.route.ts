@@ -7,7 +7,7 @@ import {
   refreshHandler,
   resetPasswordHandler,
   signupHandler,
-} from "../controller/auth.controller";
+} from "../controller/auth.controller.js";
 import Joi from "joi";
 
 const prefix = "/auth";

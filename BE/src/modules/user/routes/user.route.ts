@@ -5,8 +5,8 @@ import {
   getSingleUserHandler,
   toggleActiveHandler,
   updateDetailsHandler,
-} from "../controller/user.controller";
-import { JWTUtil } from "../../../common/utils/JWTUtils";
+} from "../controller/user.controller.js";
+import { JWTUtil } from "../../../common/utils/JWTUtils.js";
 
 const prefix = "/user";
 export default [

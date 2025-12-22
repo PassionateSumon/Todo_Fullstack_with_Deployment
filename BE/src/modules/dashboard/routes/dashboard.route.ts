@@ -2,9 +2,9 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import {
   dashBoardHandler,
   dashBoardHandlerForUser,
-} from "../controller/dashboard.controller";
+} from "../controller/dashboard.controller.js";
 import Joi from "joi";
-import { JWTUtil } from "../../../common/utils/JWTUtils";
+import { JWTUtil } from "../../../common/utils/JWTUtils.js";
 
 // const prefix = "/admin";
 

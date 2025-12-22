@@ -4,7 +4,7 @@ import {
   deleteStatusHandler,
   getAllStatusHandler,
   updateStatusHandler,
-} from "../controller/status.controller";
+} from "../controller/status.controller.js";
 
 const prefix = "/status";
 

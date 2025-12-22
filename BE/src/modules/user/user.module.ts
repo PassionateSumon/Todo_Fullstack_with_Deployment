@@ -1,4 +1,4 @@
-import routes from "./routes/user.route";
+import routes from "./routes/user.route.js";
 
 const UserModule = {
   name: "user",
