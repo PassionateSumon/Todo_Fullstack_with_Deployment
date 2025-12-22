@@ -122,7 +122,10 @@ const validateRefresh = async (req: Hapi.Request) => {
   }
 };
 
-const ORIGIN = process.env.DEV_ORIGIN || "http://localhost:5173";
+const ORIGIN =
+  (process.env.NODE_ENV === "production"
+    ? process.env.PROD_ORIGIN
+    : process.env.DEV_ORIGIN) ?? "http://localhost:3000";
 
 const init = async () => {
   const server = Hapi.server({
@@ -160,9 +163,10 @@ const init = async () => {
   server.auth.strategy("jwt_access", "cookie", {
     cookie: {
       name: "accessToken",
-      password:
-        process.env.COOKIE_SECRET || "secret_must_be_at_least_32_chars_long",
+      password: process.env.COOKIE_SECRET!,
       isHttpOnly: true,
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 15 * 60 * 1000,
       path: "/",
     },
