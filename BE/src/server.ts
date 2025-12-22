@@ -127,9 +127,11 @@ const ORIGIN =
     ? process.env.PROD_ORIGIN
     : process.env.DEV_ORIGIN) ?? "http://localhost:3000";
 
+console.log("origin: ", ORIGIN)
+
 const init = async () => {
   const server = Hapi.server({
-    port: process.env.PORT || 3000,
+    port: Number(process.env.PORT) || 3000,
     host: "0.0.0.0",
     routes: {
       cors: {
@@ -166,7 +168,7 @@ const init = async () => {
       password: process.env.COOKIE_SECRET!,
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
-      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      isSameSite: "none",
       ttl: 15 * 60 * 1000,
       path: "/",
     },
