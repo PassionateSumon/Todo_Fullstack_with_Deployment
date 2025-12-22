@@ -57,8 +57,6 @@ function App() {
     );
 
 
-  const lastRoute = localStorage.getItem("lastRoute") || "/home/task";
-
   return (
     <>
       {isLoading && (
