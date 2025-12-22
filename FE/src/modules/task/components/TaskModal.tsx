@@ -380,7 +380,7 @@ const TaskModal = ({
                 <CKEditor
                   editor={ClassicEditor}
                   data={formData.description}
-                  onChange={(event, editor) => {
+                  onChange={(_, editor) => {
                     const data = editor.getData();
                     setFormData((prev) => ({ ...prev, description: data }));
                   }}

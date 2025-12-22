@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { otpSend, otpCheck, clearError } from "../slices/AuthSlice";
 import type { RootState, AppDispatch } from "../../../store/store";
 import { toast } from "react-toastify";
-import { MailCheck, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 
 const Otp = () => {
