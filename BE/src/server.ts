@@ -168,7 +168,7 @@ const init = async () => {
       password: process.env.COOKIE_SECRET!,
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
-      isSameSite: "none",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 15 * 60 * 1000,
       path: "/",
     },
