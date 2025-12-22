@@ -8,18 +8,23 @@ import { db } from "../../../config/db.js";
 import { queueEmail } from "./emailQueue.service.js";
 import { JWTUtil } from "../../../common/utils/JWTUtils.js";
 
+const ORIGIN =
+  (process.env.NODE_ENV === "production"
+    ? process.env.PROD_ORIGIN
+    : process.env.DEV_ORIGIN) ?? "http://localhost:3000";
+
 // send invite email
 const sendInviteEmail = async (user: any, tempPassword: string) => {
-  const resetUrl = `${process.env.DEV_ORIGIN}/reset-password`;
+  const resetUrl = `${ORIGIN}/reset-password`;
   const emailContent = `
-    Welcome to the Todo App!
+    Welcome to the Task App!
     Username: ${user.username}
     Temporary Password: ${tempPassword}
     Reset password at: ${resetUrl}
   `;
   await queueEmail({
     to: user.email,
-    subject: "Invitation to Join School",
+    subject: "Invitation to Join Task Management App",
     text: emailContent,
   });
 };
