@@ -56,7 +56,7 @@ export const signupService = async ({
       };
     }
 
-    const username = Math.floor(Math.random() * 1000000).toString();
+    const username = `user_${Math.floor(Math.random() * 1000000)}`;
 
     if (!user_type) {
       user_type = "admin";
@@ -80,14 +80,9 @@ export const signupService = async ({
       };
     }
 
-    try {
-      await sendInviteEmail(newUser, password);
-    } catch (err: any) {
-      return {
-        statusCode: 500,
-        message: "Failed to send invite email",
-      };
-    }
+    sendInviteEmail(newUser, password).catch(err => {
+      console.error(`Failed to send invite email to ${newUser.email}:`, err);
+    });
 
     return {
       statusCode: 200,
@@ -136,11 +131,6 @@ export const loginService = async (
         message: "User is inactive",
       };
     }
-
-    // const check = await bcrypt.
-    console.log(password);
-    console.log(isExistUser.password);
-    // console.log(check)
 
     const isPasswordMatch = password === isExistUser.password;
 
