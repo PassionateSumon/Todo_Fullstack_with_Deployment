@@ -69,6 +69,20 @@ const InviteUserOrAdmin = () => {
       {/* Main Card Container */}
       <div className="bg-white rounded-3xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-slate-200">
         <div className="flex flex-col lg:flex-row items-end gap-6">
+          
+          {/* Name Field */}
+          <div className="flex-1 w-full space-y-2">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="John Doe" 
+                value={data.name} 
+                onChange={(e) => handleInputChange(e, "name")} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-300" 
+              />
+            </div>
+          </div>
 
           {/* Email Field */}
           <div className="flex-1 w-full space-y-2">
@@ -113,7 +127,6 @@ const InviteUserOrAdmin = () => {
           </div>
         )}
       </div>
-
     </div>
   )
 }
