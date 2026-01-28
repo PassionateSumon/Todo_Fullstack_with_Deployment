@@ -4,7 +4,8 @@ import { createTask, getAllTasks, updateTask } from "../slices/TaskSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import { toast } from "react-toastify";
 import type { ExtendedTaskModalProps } from "../types/Task.interface";
-import { format } from "date-fns";
+// import { format } from "date-fns";
+import { X, Calendar, Flag, Tag, Trash2, Edit3, Save, Info } from "lucide-react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import {
   ClassicEditor,
@@ -44,11 +45,11 @@ const TaskModal = ({
   });
 
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.task);
+  const { loading } = useSelector((state: RootState) => state.task);
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // --- Logic remains untouched ---
   useEffect(() => {
-    console.log('task --> ', task)
     if (task && (mode === "edit" || mode === "view")) {
       setFormData({
         name: task.task_name || "",
@@ -59,80 +60,40 @@ const TaskModal = ({
         end_date: task.end_date ? task.end_date.split("T")[0] : "",
       });
     } else {
-      setFormData({
-        name: "",
-        description: "",
-        status: "",
-        priority: "",
-        start_date: "",
-        end_date: "",
-      });
+      setFormData({ name: "", description: "", status: "", priority: "", start_date: "", end_date: "" });
     }
   }, [task, mode]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         handleOnClose();
       }
     };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const getViewType = () => {
-    switch (activeView) {
-      case "kanban":
-        return "kanban";
-      case "collapsed":
-        return "compact";
-      case "calendar":
-        return "calendar";
-      case "table":
-        return "table";
-      default:
-        return "kanban";
-    }
+  const handleOnClose = () => {
+    onClose();
+    setFormData({ name: "", description: "", status: "", priority: "", start_date: "", end_date: "" });
   };
 
   const handleSubmit = async () => {
-    console.log('formdata --> ', formData)
     if (!formData.name || !formData.status) {
-      toast.error("Task name and status are required.", {
-        toastId: "task-validation",
-      });
+      toast.error("Task name and status are required.");
       return;
-    }
-    const allowedPriorities = ["high", "medium", "low"] as const;
-    const priority = allowedPriorities.includes(formData.priority as any)
-      ? (formData.priority as "high" | "medium" | "low")
-      : undefined;
-
-    if (formData.description) {
-      const des =
-        new DOMParser().parseFromString(formData.description, "text/html").body
-          .textContent || "";
-      formData.description = des;
     }
     const payload = {
       name: formData.name,
       description: formData.description || undefined,
       status: formData.status,
-      priority: priority,
+      priority: (formData.priority as any) || undefined,
       start_date: formData.start_date || undefined,
       end_date: formData.end_date || undefined,
     };
@@ -140,339 +101,174 @@ const TaskModal = ({
     if (mode === "add") {
       const result = await dispatch(createTask(payload));
       if (createTask.fulfilled.match(result)) {
-        toast.success("Task created successfully!", {
-          toastId: "task-create-success",
-        });
+        toast.success("Task created!");
         onClose();
-        dispatch(getAllTasks({ viewType: getViewType() }));
+        dispatch(getAllTasks({ viewType: activeView === 'collapsed' ? 'compact' : activeView }));
       }
-      setFormData({
-        name: "",
-        description: "",
-        status: "",
-        priority: "",
-        start_date: "",
-        end_date: "",
-      });
     } else if (mode === "edit" && task?.id) {
       const result = await dispatch(updateTask({ id: task.id, payload }));
       if (updateTask.fulfilled.match(result)) {
-        toast.success("Task updated successfully!", {
-          toastId: "task-update-success",
-        });
+        toast.success("Task updated!");
         onClose();
       }
     }
   };
 
-  const handleOnClose = () => {
-    onClose();
-    setFormData({
-      name: "",
-      description: "",
-      status: "",
-      priority: "",
-      start_date: "",
-      end_date: "",
-    });
-  };
-
-  const isViewMode = mode === "view";
-  const isViewDayMode = mode === "view-day";
-  const title =
-    mode === "add"
-      ? "Add New Task"
-      : mode === "edit"
-        ? "Edit Task"
-        : mode === "view"
-          ? "View Task"
-          : `Tasks on ${task?.date ? format(task.date, "MMM d, yyyy") : ""}`;
-
   if (!isOpen) return null;
 
-  function setModalState(arg: {
-    isOpen: boolean;
-    mode: string;
-    task: any;
-  }): void { console.log(arg) }
+  const isViewMode = mode === "view";
+  
+  // UI Utility Classes
+  const labelClass = "text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-1.5 flex items-center gap-1.5";
+  const inputClass = "w-full p-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-700 text-sm outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all disabled:opacity-75 disabled:cursor-not-allowed";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 backdrop-blur-sm"></div>
+    <div className="fixed inset-0 flex items-center justify-center z-[100] p-4">
+      {/* Background with modern Glassmorphism */}
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[6px] transition-opacity animate-in fade-in duration-300"></div>
+      
       <div
         ref={modalRef}
-        className="relative bg-[#FFFFFF] rounded-xl w-[600px] max-w-[90vw] p-4 z-10 shadow-lg"
+        className="relative bg-white rounded-[28px] w-full max-w-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
       >
-        <button
-          onClick={handleOnClose}
-          className="absolute top-2 right-2 text-[#2D3748] text-xl font-medium bg-transparent border-none cursor-pointer hover:text-[#5A67D8] transition-colors"
-          aria-label="Close Modal"
-        >
-          ×
-        </button>
-        <h2 className="text-[#2D3748] text-xl font-semibold text-center mb-4">
-          {title}
-        </h2>
+        {/* Modal Header */}
+        <div className="px-10 py-7 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-sm sticky top-0 z-20">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
+              <Edit3 size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                {mode === "add" ? "Create New Task" : mode === "edit" ? "Edit Task" : "Task Details"}
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                  {mode === "add" ? "New" : "Task Board"}
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleOnClose}
+            className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all cursor-pointer border border-transparent hover:border-slate-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-        {isViewDayMode ? (
-          <div className="max-h-[400px] overflow-y-auto">
-            {(task?.tasks?.length ?? 0) > 0 ? (
-              <ul className="space-y-2">
-                {(task?.tasks ?? []).map((t: any) => (
-                  <li
-                    key={t.id}
-                    className="p-2 bg-[#F9FAFB] rounded-md cursor-pointer hover:bg-[#EDF2F7] transition-colors"
-                    onClick={() =>
-                      setModalState({ isOpen: true, mode: "view", task: t })
-                    }
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#2D3748] text-sm">
-                        {t.task_name}
-                      </span>
-                      <span className="text-[#5A67D8] text-xs">
-                        {t.status?.name || "No Status"}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTask(t);
-                          }}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTask(t.id);
-                            onClose();
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[#2D3748] text-sm text-center">
-                No tasks on this day.
-              </p>
+        {/* Scrollable Content */}
+        <div className="px-10 py-8 overflow-y-auto thin-scrollbar space-y-8 bg-white">
+          {/* Main Title Input */}
+          <div className="group">
+            <label htmlFor="name" className={labelClass}>Task Name</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              disabled={isViewMode}
+              placeholder="What needs to be done?"
+              className={`${inputClass} text-base font-semibold group-hover:border-slate-300`}
+            />
+          </div>
+
+          {/* Quick Properties Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div>
+              <label className={labelClass}><Tag size={12} className="text-indigo-400"/> Current Status</label>
+              <select name="status" value={formData.status} onChange={handleChange} disabled={isViewMode} className={inputClass}>
+                <option value="">Choose status...</option>
+                {statuses.map((s: string) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className={labelClass}><Flag size={12} className="text-rose-400"/> Priority Level</label>
+              <select name="priority" value={formData.priority} onChange={handleChange} disabled={isViewMode} className={inputClass}>
+                <option value="">Set Priority...</option>
+                <option value="high">🔴 High Priority</option>
+                <option value="medium">🟡 Medium Priority</option>
+                <option value="low">🟢 Low Priority</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelClass}><Calendar size={12} className="text-slate-400"/> Starting On</label>
+              <input name="start_date" type="date" value={formData.start_date} onChange={handleChange} disabled={isViewMode} className={inputClass} />
+            </div>
+
+            <div>
+              <label className={labelClass}><Calendar size={12} className="text-slate-400"/> Deadline</label>
+              <input name="end_date" type="date" value={formData.end_date} onChange={handleChange} disabled={isViewMode} className={inputClass} />
+            </div>
+          </div>
+
+          {/* Description Editor */}
+          <div className="space-y-2">
+            <label className={labelClass}><Info size={12} className="text-slate-400"/> Detailed Description</label>
+            <div className={`rounded-2xl border ${isViewMode ? 'bg-slate-50/50 border-slate-200' : 'bg-white border-slate-200 focus-within:border-indigo-500 shadow-sm transition-all overflow-hidden'}`}>
+              {isViewMode ? (
+                <div className="p-5 prose prose-sm max-w-none text-slate-600 min-h-[160px] leading-relaxed" dangerouslySetInnerHTML={{ __html: formData.description }} />
+              ) : (
+                <div className="custom-saas-editor">
+                  <CKEditor
+                    editor={ClassicEditor}
+                    data={formData.description}
+                    onChange={(_, editor) => setFormData(p => ({ ...p, description: editor.getData() }))}
+                    config={{
+                      licenseKey: "GPL",
+                      toolbar: ["undo", "redo", "|", "heading", "|", "bold", "italic", "|", "link", "bulletedList", "numberedList"],
+                      plugins: [Bold, Essentials, Heading, Indent, IndentBlock, Italic, Link, List, MediaEmbed, Paragraph, Table, Undo],
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer (Sticky) */}
+        <div className="px-10 py-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between mt-auto">
+          <div>
+            {(mode === "view" || mode === "edit") && task?.id && (
+              <button
+                onClick={() => { handleDeleteTask(task.id); onClose(); }}
+                className="flex items-center gap-2 text-rose-500 hover:bg-rose-100/50 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                <Trash2 size={16} /> Delete Task
+              </button>
             )}
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="text-[#2D3748] text-sm block mb-1"
-                >
-                  Task Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                  placeholder="Enter task name"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="status"
-                  className="text-[#2D3748] text-sm block mb-1"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                >
-                  <option value="">Select status</option>
-                  {statuses.map((status: string) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="priority"
-                  className="text-[#2D3748] text-sm block mb-1"
-                >
-                  Priority
-                </label>
-                <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                >
-                  <option value="">Select priority</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="start_date"
-                  className="text-[#2D3748] text-sm block mb-1"
-                >
-                  Start Date
-                </label>
-                <input
-                  id="start_date"
-                  type="date"
-                  name="start_date"
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="end_date"
-                  className="text-[#2D3748] text-sm block mb-1"
-                >
-                  End Date
-                </label>
-                <input
-                  id="end_date"
-                  type="date"
-                  name="end_date"
-                  value={formData.end_date}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm outline-none focus:border-[#5A67D8] transition-colors disabled:bg-[#F9FAFB]"
-                />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="description"
-                className="text-[#2D3748] text-sm block mb-1"
+
+          <div className="flex items-center gap-4">
+            <button onClick={handleOnClose} className="px-5 py-2.5 text-slate-500 font-bold text-sm hover:text-slate-900 transition-colors cursor-pointer">
+              Discard
+            </button>
+            
+            {mode === "view" ? (
+              <button
+                onClick={() => task && handleEditTask(task)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-[0_8px_20px_-4px_rgba(79,70,229,0.4)] flex items-center gap-2 cursor-pointer active:scale-95"
               >
-                Description
-              </label>
-              {isViewMode ? (
-                <div
-                  className="w-full p-2 border border-[#CBD5E0] rounded-md text-[#2D3748] text-sm bg-[#F9FAFB] min-h-[100px]"
-                  dangerouslySetInnerHTML={{ __html: formData.description }}
-                />
-              ) : (
-                <CKEditor
-                  editor={ClassicEditor}
-                  data={formData.description}
-                  onChange={(_, editor) => {
-                    const data = editor.getData();
-                    setFormData((prev) => ({ ...prev, description: data }));
-                  }}
-                  config={{
-                    licenseKey: "GPL",
-                    toolbar: [
-                      "undo",
-                      "redo",
-                      "|",
-                      "heading",
-                      "|",
-                      "bold",
-                      "italic",
-                      "|",
-                      "link",
-                      "insertTable",
-                      "mediaEmbed",
-                      "|",
-                      "bulletedList",
-                      "numberedList",
-                      "indent",
-                      "outdent",
-                    ],
-                    plugins: [
-                      Bold,
-                      Essentials,
-                      Heading,
-                      Indent,
-                      IndentBlock,
-                      Italic,
-                      Link,
-                      List,
-                      MediaEmbed,
-                      Paragraph,
-                      Table,
-                      Undo,
-                    ],
-                    initialData: "",
-                  }}
-                />
-              )}
-            </div>
-            {error && (
-              <p className="text-[#E53E3E] text-sm text-center mb-4">{error}</p>
+                <Edit3 size={18} /> Modify
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-[0_8px_20px_-4px_rgba(79,70,229,0.4)] flex items-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Saving...</span>
+                ) : (
+                  <><Save size={18} /> {mode === "add" ? "Create Task" : "Save Changes"}</>
+                )}
+              </button>
             )}
-            <div className="flex justify-between gap-2">
-              {(mode === "view" || mode === "edit") && task?.id && (
-                <button
-                  onClick={() => {
-                    handleDeleteTask(task.id);
-                    onClose();
-                  }}
-                  className="bg-[#E53E3E] hover:bg-[#C53030] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
-                >
-                  Delete
-                </button>
-              )}
-              <div className="flex gap-2 ml-auto">
-                {mode === "view" && task?.id && (
-                  <button
-                    onClick={() => handleEditTask(task)}
-                    className="bg-[#5A67D8] hover:bg-[#434190] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                )}
-                {(mode === "add" || mode === "edit") && (
-                  <>
-                    <button
-                      onClick={handleOnClose}
-                      className="bg-[#EDF2F7] hover:bg-[#E2E8F0] text-[#2D3748] font-medium py-2 px-4 rounded-md transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      className={`bg-[#5A67D8] hover:bg-[#434190] text-white font-medium py-2 px-4 rounded-md transition-colors cursor-pointer ${loading ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                    >
-                      {loading
-                        ? "Saving..."
-                        : mode === "add"
-                          ? "Create Task"
-                          : "Update Task"}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

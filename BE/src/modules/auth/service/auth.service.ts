@@ -13,32 +13,17 @@ const ORIGIN =
     ? process.env.PROD_ORIGIN
     : process.env.DEV_ORIGIN) ?? "http://localhost:3000";
 
-// send invite email
-const sendInviteEmail = async (user: any, tempPassword: string) => {
-  const resetUrl = `${ORIGIN}/reset-password`;
-  const emailContent = `
-    Welcome to the Task App!
-    Username: ${user.username}
-    Temporary Password: ${tempPassword}
-    Reset password at: ${resetUrl}
-  `;
-  await queueEmail({
-    to: user.email,
-    subject: "Invitation to Join Task Management App",
-    text: emailContent,
-  });
+// Send invite email (disabled)
+const sendInviteEmail = async (user: any) => {
+  // Emailing is disabled for now. Keep placeholder for future.
+  console.log(`[email disabled] invite would be sent to: ${user?.email}`);
+  return { success: true };
 };
 
-// send otp email
+// Send OTP email (disabled)
 const sendOTPEmail = async (email: string, otp: string) => {
-  const otpContent = `
-    OTP: ${otp}
-  `;
-  await queueEmail({
-    to: email,
-    subject: "OTP for verification",
-    text: otpContent,
-  });
+  console.log(`[email disabled] OTP for ${email}: ${otp}`);
+  return { success: true };
 };
 
 export const signupService = async ({
@@ -80,9 +65,9 @@ export const signupService = async ({
       };
     }
 
-    sendInviteEmail(newUser, password).catch(err => {
-      console.error(`Failed to send invite email to ${newUser.email}:`, err);
-    });
+    // sendInviteEmail(newUser).catch((err) => {
+    //   console.error(`Failed to send invite email to ${newUser.email}:`, err);
+    // });
 
     return {
       statusCode: 200,
@@ -140,115 +125,26 @@ export const loginService = async (
         message: "Invalid password",
       };
     }
-    if (!isExistUser.is_reset_password) {
-      return {
-        statusCode: 400,
-        message: "Please reset your password",
-      };
-    }
-
-    return {
-      statusCode: 200,
-      message: "User logged in successfully",
-      user: {
-        id: isExistUser.id,
-        name: isExistUser.name,
-        email: isExistUser.email,
-        role: isExistUser.user_type,
-        username: isExistUser.username,
-        user_type: isExistUser.user_type,
-        isActive: isExistUser.isActive,
-        isOtpVerified: isExistUser.isOtpVerified,
-      },
-    };
-  } catch (err: any) {
-    return {
-      statusCode: 500,
-      message: "Internal server error",
-    };
-  }
-};
-
-export const otpSendService = async (email: string) => {
-  try {
-    const otpValue = Math.floor(Math.random() * 1000 + 1000);
-    const user = await db.User.findOne({ where: { email } });
-    if (!user) {
-      return {
-        statusCode: 404,
-        message: "User not found",
-      };
-    }
-    await db.User.update({ otp: otpValue.toString() }, { where: { email } });
-
-    try {
-      await sendOTPEmail(email, otpValue.toString());
-    } catch (error) {
-      return {
-        statusCode: 500,
-        message: "Failed to send OTP email",
-      };
-    }
-
-    return {
-      statusCode: 200,
-      message: "OTP sent successfully",
-      data: {},
-    };
-  } catch (err: any) {
-    return {
-      statusCode: 500,
-      message: err.message || "Internal server error",
-    };
-  }
-};
-
-export const otpCheckService = async (
-  email: string,
-  otp: string,
-  h: ResponseToolkit
-) => {
-  try {
-    const user = await db.User.findOne({
-      where: { email },
-      attributes: { exclude: ["password"] },
-    });
-    if (!user) {
-      return {
-        statusCode: 404,
-        message: "User not found",
-      };
-    }
-
-    if (user.otp !== otp) {
-      return {
-        statusCode: 400,
-        message: "Invalid OTP",
-      };
-    }
-
-    await db.User.update(
-      { isOtpVerified: true, otp: null },
-      { where: { email } }
-    );
-    const updatedUser = await db.User.findOne({
-      where: { email },
-      attributes: { exclude: ["password"] },
-    });
+    // if (!isExistUser.is_reset_password) {
+    //   return {
+    //     statusCode: 400,
+    //     message: "Please reset your password",
+    //   };
+    // }
 
     const accessToken = JWTUtil.generateAccessToken(
-      updatedUser.id,
-      updatedUser.user_type
+      isExistUser.id,
+      isExistUser.user_type
     );
     const refreshToken = JWTUtil.generateRefreshToken(
-      updatedUser.id,
-      updatedUser.user_type
+      isExistUser.id,
+      isExistUser.user_type
     );
 
     try {
       await db.RefreshToken.create({
         token: refreshToken,
-        userId: updatedUser.id,
+        userId: isExistUser.id,
       });
       // console.log(res)
     } catch (err: any) {
@@ -274,17 +170,44 @@ export const otpCheckService = async (
 
     return {
       statusCode: 200,
-      message: "OTP verified successfully",
-      data: {
-        user: updatedUser,
+      message: "User logged in successfully",
+      user: {
+        id: isExistUser.id,
+        name: isExistUser.name,
+        email: isExistUser.email,
+        role: isExistUser.user_type,
+        username: isExistUser.username,
+        user_type: isExistUser.user_type,
+        isActive: isExistUser.isActive,
+        isOtpVerified: isExistUser.isOtpVerified,
       },
     };
   } catch (err: any) {
     return {
       statusCode: 500,
-      message: err.message || "Internal server error",
+      message: "Internal server error",
     };
   }
+};
+
+export const otpSendService = async (email: string) => {
+  // OTP send endpoint disabled for now.
+  return {
+    statusCode: 400,
+    message: "OTP feature is disabled",
+  };
+};
+
+export const otpCheckService = async (
+  email: string,
+  otp: string,
+  h: ResponseToolkit
+) => {
+  // OTP verification disabled
+  return {
+    statusCode: 400,
+    message: "OTP verification is disabled",
+  };
 };
 
 export const refreshService = async (
@@ -399,8 +322,8 @@ export const resetPasswordService = async ({
       };
     }
 
-    console.log(tempPassword);
-    console.log(isExistUser.password);
+    // console.log(tempPassword);
+    // console.log(isExistUser.password);
     const isPasswordMatch = tempPassword === isExistUser.password;
 
     if (!isPasswordMatch) {
@@ -444,12 +367,7 @@ export const myService = async (userId: string) => {
         message: "User not found",
       };
     }
-    if (!user.isOtpVerified) {
-      return {
-        statusCode: 400,
-        message: "User is not verified through OTP verification",
-      };
-    }
+    // OTP verification requirement removed for now.
 
     return {
       statusCode: 200,
@@ -484,12 +402,7 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
         message: "User not found",
       };
     }
-    if (!user.isOtpVerified) {
-      return {
-        statusCode: 400,
-        message: "User is not verified through OTP verification",
-      };
-    }
+    // OTP verification requirement removed for now.
 
     const deletedCount = await db.RefreshToken.destroy({
       where: {

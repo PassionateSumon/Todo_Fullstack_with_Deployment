@@ -2,133 +2,117 @@ import { useDispatch, useSelector } from "react-redux";
 import { Outlet, NavLink } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store/store";
 import { logout } from "../../modules/auth/slices/AuthSlice";
-import { ListTodo, LayoutDashboard, LogOut, User } from "lucide-react";
-
+import { 
+  LayoutDashboard, 
+  LogOut, 
+  UserCircle, 
+  CheckSquare, 
+  Activity, 
+  UserPlus, 
+  BarChart2, 
+  ShieldCheck,
+  // ChevronRight
+} from "lucide-react";
 
 const HomeLayout = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { role } = useSelector((state: RootState) => state.auth);
 
+  const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
+    `group relative flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+      isActive
+        ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/50" 
+        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+    }`;
+
   return (
-    <div className="min-h-screen h-[100vh] flex bg-gray-100 overflow-y-hidden">
+    <div className="min-h-screen flex bg-slate-50/50 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md px-4 py-6 flex flex-col justify-between">
+      <aside className="w-72 bg-white border-r border-slate-200 px-6 py-8 flex flex-col justify-between shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div>
-          <div className="flex items-center mb-6">
-            <LayoutDashboard className="w-8 h-8 text-indigo-600 mr-2" />
-            <NavLink to="task" className="text-xl font-semibold text-gray-800">Task Valut</NavLink>
+          <div className="flex items-center gap-3 mb-10 px-2">
+            <div className="bg-indigo-600 p-2 rounded-lg shadow-lg shadow-indigo-100">
+              <LayoutDashboard className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Task Vault</h1>
           </div>
-          <nav className="space-y-1 text-sm font-medium">
-            <NavLink
-              to="task"
-              className={({ isActive }) =>
-                `block px-4 py-2 rounded-md text-base font-medium ${isActive
-                  ? "bg-[#5A67D8] text-white shadow-sm border-l-4 border-indigo-900 pl-3"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`
-              }
-            >
-              <ListTodo className="w-4 h-4 mr-2 inline" />
-              <span>
-                Tasks
-              </span>
-            </NavLink>
 
-            <NavLink
-              to="status"
-              className={({ isActive }) =>
-                `block px-4 py-2 rounded-md text-base font-medium ${isActive
-                  ? "bg-[#5A67D8] text-white shadow-sm border-l-4 border-indigo-900 pl-3"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`
-              }
-            >
-              <ListTodo className="w-4 h-4 mr-2 inline" />
-              <span>
-                Status
-              </span>
-            </NavLink>
+          <div className="space-y-6">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-4 mb-3">Core Menu</p>
+              <nav className="space-y-1.5">
+                <NavLink to="task" className={navLinkClasses}>
+                  <div className="flex items-center gap-3">
+                    <CheckSquare className="w-5 h-5" />
+                    <span>Tasks</span>
+                  </div>
+                </NavLink>
 
-            {role === "admin" && (<NavLink
-              to="invite"
-              className={({ isActive }) =>
-                `block px-4 py-2 rounded-md text-base font-medium ${isActive
-                  ? "bg-[#5A67D8] text-white shadow-sm border-l-4 border-indigo-900 pl-3"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`
-              }
-            >
-              <ListTodo className="w-4 h-4 mr-2 inline" />
-              <span>
-                Invite
-              </span>
-            </NavLink>)}
+                <NavLink to="status" className={navLinkClasses}>
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-5 h-5" />
+                    <span>Status</span>
+                  </div>
+                </NavLink>
 
-            <NavLink
-              to="dashboard/me"
-              end
-              className={({ isActive }) =>
-                `block px-4 py-2 rounded-md text-base font-medium ${isActive
-                  ? "bg-[#5A67D8] text-white shadow-sm border-l-4 border-indigo-900 pl-3"
-                  : "text-gray-700 hover:bg-gray-200"
-                }`
-              }
-            >
-              <ListTodo className="w-4 h-4 mr-2 inline" />
-              <span>
-                Personal Dashboard
-              </span>
-            </NavLink>
+                {role === "admin" && (
+                  <NavLink to="invite" className={navLinkClasses}>
+                    <div className="flex items-center gap-3">
+                      <UserPlus className="w-5 h-5" />
+                      <span>Invite</span>
+                    </div>
+                  </NavLink>
+                )}
+              </nav>
+            </div>
 
-            {role === "admin" && (
-              <NavLink
-                to="dashboard"
-                end
-                className={({ isActive }) =>
-                  `block px-4 py-2 rounded-md text-base font-medium ${isActive
-                    ? "bg-[#5A67D8] text-white shadow-sm border-l-4 border-indigo-900 pl-3"
-                    : "text-gray-700 hover:bg-gray-200"
-                  }`
-                }
-              >
-                <ListTodo className="w-4 h-4 mr-2 inline" />
-                <span>
-                  Admin Dashboard
-                </span>
-              </NavLink>
-            )}
-          </nav>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-4 mb-3">Analytics</p>
+              <nav className="space-y-1.5">
+                <NavLink to="dashboard/me" end className={navLinkClasses}>
+                  <div className="flex items-center gap-3">
+                    <BarChart2 className="w-5 h-5" />
+                    <span>Personal Board</span>
+                  </div>
+                </NavLink>
+                {role === "admin" && (
+                  <NavLink to="dashboard" end className={navLinkClasses}>
+                    <div className="flex items-center gap-3">
+                      <ShieldCheck className="w-5 h-5" />
+                      <span>Admin Board</span>
+                    </div>
+                  </NavLink>
+                )}
+              </nav>
+            </div>
+          </div>
         </div>
 
-        <div className="pt-6 flex flex-col space-y-2">
-          <NavLink
-            to="profile"
-            end
-            className="w-full px-4 py-2 rounded-md text-base font-medium bg-[#5A67D8] hover:bg-[#434190] text-white cursor-pointer text-center border-x-4 border-indigo-900 "
-          >
-            <User className="w-4 h-4 mr-2 inline" />
-            <span> Profile </span>
+        <div className="pt-6 border-t border-slate-100 space-y-3">
+          <NavLink to="profile" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+              <UserCircle className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="leading-none text-slate-900 truncate">My Profile</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{role}</p>
+            </div>
           </NavLink>
 
           <button
-            className="w-full px-4 py-2 rounded-md text-base font-medium bg-[#5A67D8] hover:bg-[#434190] text-white cursor-pointer text-center border-x-4 border-indigo-900 "
-            onClick={() => {
-              dispatch(logout());
-            }}
+            onClick={() => dispatch(logout())}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-50 transition-all group cursor-pointer"
           >
-            <LogOut className="w-4 h-4 mr-2 inline" />
-            <span>
-              Logout
-            </span>
+            <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Logout</span>
           </button>
         </div>
-
-
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8 max-w-[1600px] mx-auto h-full">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

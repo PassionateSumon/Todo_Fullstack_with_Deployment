@@ -3,92 +3,124 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteStatus, getAllStatuses } from "../slices/StatusSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import StatusModal from "../components/StatusModal";
+import { Plus, Pencil, Trash2, Search, Hash } from "lucide-react";
 
 const StatusPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { statuses } = useSelector((state: RootState) => state.status);
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     mode: "add" | "edit";
     status: any;
-  }>({
-    isOpen: false,
-    mode: "add",
-    status: null,
-  });
+  }>({ isOpen: false, mode: "add", status: null });
 
   useEffect(() => {
     dispatch(getAllStatuses());
   }, [dispatch]);
 
-  const handleModalOpen = (mode: "add" | "edit", status: any) => {
-    setModalState({ isOpen: true, mode, status });
+  // Dynamic color helper
+  const getStatusColor = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('pending') || n.includes('wait')) return 'bg-amber-400';
+    if (n.includes('complete') || n.includes('done') || n.includes('final')) return 'bg-emerald-500';
+    if (n.includes('block') || n.includes('stop')) return 'bg-rose-500';
+    if (n.includes('progress') || n.includes('new')) return 'bg-blue-500';
+    return 'bg-slate-400';
   };
-  const handleModalClose = () => {
-    setModalState({ isOpen: false, mode: "add", status: null });
-  };
-  const handleEditStatus = (status: any) => {
-    handleModalOpen("edit", status);
-  };
-  const handleDeleteStatus = (status: any) => {
-    dispatch(deleteStatus({ id: Number(status.id) }));
-  };
+
+  const filteredStatuses = statuses?.filter(s => 
+    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-6 border border-gray-200 rounded-lg bg-white shadow-md h-[93vh] ">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Statuses</h1>
-        <button
-          onClick={() => handleModalOpen("add", null)}
-          className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
-        >
-          + Add Status
-        </button>
-      </div>
+    <div className="h-full bg-[#F8FAFC] p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Status</h1>
+            <p className="text-slate-500 text-sm mt-1">Create your own status here.</p>
+          </div>
+          <button
+            onClick={() => setModalState({ isOpen: true, mode: "add", status: null })}
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm shadow-indigo-200 cursor-pointer active:scale-95"
+          >
+            <Plus size={18} />
+            <span>Add Status</span>
+          </button>
+        </div>
 
-      <div className="w-full max-h-[90%] overflow-y-auto rounded-lg shadow-md thin-scrollbar ">
-        <table className="w-full border border-gray-200 rounded-xl shadow-lg ">
-          <thead className="bg-gray-50 text-gray-700 uppercase text-xs font-semibold tracking-wider">
-            <tr>
-              <th className="p-4 text-left">ID</th>
-              <th className="p-4 text-left">Name</th>
-              <th className="p-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {statuses.map((status) => (
-              <tr
-                key={status.id}
-                className="hover:bg-gray-50 transition-colors duration-200"
-              >
-                <td className="p-4 text-gray-800 text-sm font-medium">{status.id}</td>
-                <td className="p-4 text-gray-800 text-sm font-medium">{status.name}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-4">
+        {/* List Container */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Internal Toolbar */}
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Search statuses..."
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {filteredStatuses?.length} Total
+            </div>
+          </div>
+
+          {/* Table Header */}
+          <div className="grid grid-cols-12 px-6 py-3 bg-slate-50/30 border-b border-slate-100">
+            <div className="col-span-8 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status Name</div>
+            <div className="col-span-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</div>
+          </div>
+
+          {/* List Items */}
+          <div className="divide-y divide-slate-100">
+            {filteredStatuses?.length > 0 ? (
+              filteredStatuses.map((status) => (
+                <div 
+                  key={status.id} 
+                  className="grid grid-cols-12 items-center px-6 py-4 hover:bg-indigo-50/20 transition-colors group"
+                >
+                  <div className="col-span-8 flex items-center gap-3">
+                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(status.name)} shadow-sm`} />
+                    <span className="text-sm font-semibold text-slate-700">{status.name}</span>
+                  </div>
+                  
+                  <div className="col-span-4 flex justify-end items-center gap-2">
                     <button
-                      onClick={handleEditStatus.bind(null, status)}
-                      className="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors duration-150 hover:underline cursor-pointer "
+                      onClick={() => setModalState({ isOpen: true, mode: "edit", status })}
+                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
-                      Edit
+                      <Pencil size={16} />
                     </button>
                     <button
-                      onClick={handleDeleteStatus.bind(null, status)}
-                      className="text-red-600 hover:text-red-800 font-semibold text-sm transition-colors duration-150 hover:underline cursor-pointer "
+                      onClick={() => dispatch(deleteStatus({ id: Number(status.id) }))}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
-                      Delete
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              ))
+            ) : (
+              <div className="py-20 text-center">
+                <div className="inline-flex p-4 rounded-full bg-slate-50 mb-4">
+                  <Hash className="text-slate-300" size={32} />
+                </div>
+                <p className="text-slate-500 font-medium">No statuses found matching your search</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
 
       <StatusModal
         isOpen={modalState.isOpen}
-        handleClose={handleModalClose}
+        handleClose={() => setModalState({ ...modalState, isOpen: false })}
         mode={modalState.mode}
         status={modalState.status}
       />

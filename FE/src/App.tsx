@@ -6,8 +6,8 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import SignupPage from "./modules/auth/pages/SignupPage";
 import LoginPage from "./modules/auth/pages/LoginPage";
 import ProtectedRoute from "./common/utils/ProtectedRoute";
-import Otp from "./modules/auth/components/Otp";
-import ResetPassword from "./modules/auth/components/ResetPassword";
+// import Otp from "./modules/auth/components/Otp";
+// import ResetPassword from "./modules/auth/components/ResetPassword";
 import type { AppDispatch } from "./store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { checkAuthStatus } from "./modules/auth/slices/AuthSlice";
@@ -71,8 +71,8 @@ function App() {
         <Route path="/" element={isLoggedIn ? <Navigate to="/home/task" /> : <Landing />} />
         <Route path="/signup" element={isLoggedIn ? <Navigate to="/home/task" /> : <SignupPage />} />
         <Route path="/login" element={isLoggedIn ? <Navigate to="/home/task" /> : <LoginPage />} />
-        <Route path="/reset-password" element={isLoggedIn ? <Navigate to="/home/task" /> : <ResetPassword />} />
-        <Route path="/otp-verification" element={isLoggedIn ? <Navigate to="/home/task" /> : <Otp />} />
+        {/* <Route path="/reset-password" element={isLoggedIn ? <Navigate to="/home/task" /> : <ResetPassword />} />
+        <Route path="/otp-verification" element={isLoggedIn ? <Navigate to="/home/task" /> : <Otp />} /> */}
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomeLayout />}>

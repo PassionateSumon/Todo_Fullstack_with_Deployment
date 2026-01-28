@@ -129,7 +129,7 @@ const Auth: FC<AuthProps> = ({ from }) => {
       toast.success(`${from === "signup" ? "Signup" : "Login"} successful!`, {
         toastId: "auth-success",
       });
-      navigate(from === "signup" ? "/reset-password" : "/otp-verification");
+      navigate(from === "signup" ? "/login" : "/home/task");
     }
   };
 

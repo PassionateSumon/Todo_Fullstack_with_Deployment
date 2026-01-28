@@ -55,6 +55,7 @@ export default [
       },
     },
   },
+  /* OTP endpoints disabled
   {
     method: "POST",
     path: `${prefix}/otp-send`,
@@ -94,6 +95,7 @@ export default [
       },
     },
   },
+  */
   {
     method: "PUT",
     path: `${prefix}/reset-password`,

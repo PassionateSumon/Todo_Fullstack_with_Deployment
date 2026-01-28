@@ -68,7 +68,7 @@ export const otpCheckHandler = async (req: Request, h: ResponseToolkit) => {
       email: string;
       otp: string;
     };
-    const result = await otpCheckService(email, otp, h);
+    const result = await otpCheckService(email, otp, h) as any;
     if (result.statusCode !== 200 && result.statusCode !== 201)
       return error(null, result.message, result.statusCode)(h);
 
@@ -108,6 +108,7 @@ export const resetPasswordHandler = async (
 
 export const myHandler = async (req: Request, h: ResponseToolkit) => {
   try {
+    console.log(req.auth.credentials)
     const { userId } = req.auth.credentials as any;
     const result = await myService(userId);
     if (result.statusCode !== 200 && result.statusCode !== 201)

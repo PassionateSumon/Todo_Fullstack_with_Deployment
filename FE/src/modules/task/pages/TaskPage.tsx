@@ -6,239 +6,103 @@ import TaskModal from "../components/TaskModal";
 import { getAllStatuses } from "../../status/slices/StatusSlice";
 import KanbanView from "../components/KanbanView";
 import CollapsedView from "../components/CollapsedView";
-import CalendarView from "../components/CalenderView";
 import TableView from "../components/TableView";
-
-// Map of status names to colors and symbols
-const statusStyles: { [key: string]: { color: string; symbol: string } } = {
-  "To Do": { color: "#4FD1C5", symbol: "📋" },
-  "In Progress": { color: "#F6AD55", symbol: "⚙️" },
-  Done: { color: "#68D391", symbol: "✅" },
-  Blocked: { color: "#F56565", symbol: "🚫" },
-  Review: { color: "#A78BFA", symbol: "👀" },
-};
-
-// Fallback colors for dynamic statuses not in the map
-const fallbackColors = ["#60A5FA", "#F472B6", "#FBBF24", "#34D399", "#A3E635"];
+import { Plus, LayoutGrid, List, Table as TableIcon } from "lucide-react";
 
 const getStatusStyle = (status: string) => {
-  if (statusStyles[status]) {
-    return statusStyles[status];
-  }
-  const color =
-    fallbackColors[Math.floor(Math.random() * fallbackColors.length)];
-  return { color, symbol: "📌" };
+  const styles: any = {
+    "To Do": { color: "#6366f1", symbol: "📋" },
+    "In Progress": { color: "#f59e0b", symbol: "⚙️" },
+    "Done": { color: "#10b981", symbol: "✅" },
+    "Complete": { color: "#10b981", symbol: "✅" },
+    "Blocked": { color: "#ef4444", symbol: "🚫" },
+  };
+  return styles[status] || { color: "#94a3b8", symbol: "📌" };
 };
 
 const TaskPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { tasks, loading, error } = useSelector(
-    (state: RootState) => state.task
-  );
+  const { tasks, loading, error } = useSelector((state: RootState) => state.task);
   const { statuses } = useSelector((state: RootState) => state.status);
 
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    mode: "add" | "view" | "edit" | "view-day";
-    task: any | null;
-  }>({
-    isOpen: false,
-    mode: "add",
-    task: null,
+  const [modalState, setModalState] = useState<{ isOpen: boolean; mode: "add" | "view" | "edit" | "view-day"; task: any | null }>({
+    isOpen: false, mode: "add", task: null,
   });
 
-  const [activeView, setActiveView] = useState<
-    "kanban" | "collapsed" | "calendar" | "table"
-  >("kanban");
+  const [activeView, setActiveView] = useState<"kanban" | "collapsed" | "table">("kanban");
+  const [expandedStatuses, setExpandedStatuses] = useState<{ [key: string]: boolean }>({});
+  const [expandedTasks, setExpandedTasks] = useState<{ [key: string]: boolean }>({});
 
-  const [expandedStatuses, setExpandedStatuses] = useState<{
-    [key: string]: boolean;
-  }>({});
-  const [expandedTasks, setExpandedTasks] = useState<{
-    [key: string]: boolean;
-  }>({});
-
-  const [isDragged, setIsDragged] = useState<boolean>(false);
-  console.log(isDragged)
-
-  // Fetch tasks and statuses
   useEffect(() => {
-    let viewType: "kanban" | "calendar" | "compact" | "table";
-    switch (activeView) {
-      case "kanban":
-        viewType = "kanban";
-        break;
-      case "collapsed":
-        viewType = "compact";
-        break;
-      case "calendar":
-        viewType = "calendar";
-        break;
-      case "table":
-        viewType = "table";
-        break;
-      default:
-        viewType = "kanban";
-    }
-    dispatch(getAllTasks({ viewType }));
+    const viewMap: any = { kanban: "kanban", collapsed: "compact", table: "table" };
+    dispatch(getAllTasks({ viewType: viewMap[activeView] }));
   }, [activeView, dispatch]);
 
-  useEffect(() => {
-    dispatch(getAllStatuses());
-  }, [dispatch]);
+  useEffect(() => { dispatch(getAllStatuses()); }, [dispatch]);
 
-  const handleOpenModal = (
-    mode: "add" | "view" | "edit" | "view-day",
-    task: any | null = null
-  ) => {
-    setModalState({ isOpen: true, mode, task });
-  };
-
-  const handleCloseModal = () => {
-    setModalState({ isOpen: false, mode: "add", task: null });
-  };
-
-  const handleEditTask = (task: any) => {
-    handleOpenModal("edit", task);
-  };
-
-  const toggleStatus = (status: string) => {
-    setExpandedStatuses((prev) => ({
-      ...prev,
-      [status]: !prev[status],
-    }));
-  };
-
-  const toggleTask = (taskId: string) => {
-    setExpandedTasks((prev) => ({
-      ...prev,
-      [taskId]: !prev[taskId],
-    }));
-  };
+  const viewBtnClass = (id: string) => `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+    activeView === id ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+  }`;
 
   return (
-    <div className="min-h-screen h-[90vh] w-[80vw] overflow-x-auto bg-[#F3F4FE] p-3 mt-[-10px] ">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-[#2D3748] text-2xl font-semibold"></h1>
+    <div className="h-full flex flex-col space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Project Board</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Manage and track your team's progress in real-time.</p>
+        </div>
         <button
-          onClick={() => handleOpenModal("add")}
-          className="bg-[#5A67D8] hover:bg-[#434190] text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+          onClick={() => setModalState({ isOpen: true, mode: "add", task: null })}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 cursor-pointer active:scale-95"
         >
-          <span>+</span> Add Task
+          <Plus size={18} /> Add Task
         </button>
       </div>
 
-      {/* View Tabs */}
-      <div className="flex gap-4 mb-2.5 border-b border-[#CBD5E0]">
-        <button
-          onClick={() => setActiveView("kanban")}
-          className={`pb-2 text-sm font-medium transition-colors ${
-            activeView === "kanban"
-              ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-              : "text-[#2D3748] hover:text-[#5A67D8]"
-          } cursor-pointer`}
-        >
-          Kanban
-        </button>
-        <button
-          onClick={() => setActiveView("collapsed")}
-          className={`pb-2 text-sm font-medium transition-colors ${
-            activeView === "collapsed"
-              ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-              : "text-[#2D3748] hover:text-[#5A67D8]"
-          } cursor-pointer`}
-        >
-          Collapsed
-        </button>
-        <button
-          onClick={() => setActiveView("calendar")}
-          className={`pb-2 text-sm font-medium transition-colors ${
-            activeView === "calendar"
-              ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-              : "text-[#2D3748] hover:text-[#5A67D8]"
-          } cursor-pointer`}
-        >
-          Calendar
-        </button>
-        <button
-          onClick={() => setActiveView("table")}
-          className={`pb-2 text-sm font-medium transition-colors ${
-            activeView === "table"
-              ? "text-[#5A67D8] border-b-2 border-[#5A67D8]"
-              : "text-[#2D3748] hover:text-[#5A67D8]"
-          } cursor-pointer`}
-        >
-          Table
-        </button>
+      {/* Modern Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex bg-slate-100/80 p-1 rounded-xl">
+          <button onClick={() => setActiveView("kanban")} className={viewBtnClass("kanban")}><LayoutGrid size={16}/> Kanban</button>
+          <button onClick={() => setActiveView("collapsed")} className={viewBtnClass("collapsed")}><List size={16}/> List</button>
+          <button onClick={() => setActiveView("table")} className={viewBtnClass("table")}><TableIcon size={16}/> Table</button>
+        </div>
       </div>
 
-      {/* View Rendering */}
-      {activeView === "kanban" && (
-        <KanbanView
-          tasks={tasks}
-          loading={loading}
-          error={error}
-          statuses={statuses.map((status: any) => status.name)}
-          getStatusStyle={getStatusStyle}
-          handleOpenModal={handleOpenModal}
-          handleEditTask={handleEditTask}
-          handleDeleteTask={(taskId) => dispatch(deleteTask(taskId))}
-          dispatch={dispatch}
-        />
-      )}
+      {/* Main Viewport */}
+      <div className="flex-1 min-h-0">
+        <div className="h-full overflow-hidden">
+          {activeView === "kanban" && (
+            <KanbanView 
+              tasks={tasks} loading={loading} error={error} statuses={statuses.map((s: any) => s.name)} 
+              getStatusStyle={getStatusStyle} handleOpenModal={(m, t) => setModalState({ isOpen: true, mode: m, task: t })}
+              handleEditTask={(t) => setModalState({ isOpen: true, mode: "edit", task: t })}
+              handleDeleteTask={(id) => dispatch(deleteTask(id))} dispatch={dispatch} 
+            />
+          )}
+          {activeView === "collapsed" && (
+            <CollapsedView tasks={tasks} loading={loading} error={error} getStatusStyle={getStatusStyle}
+              handleOpenModal={(m, t) => setModalState({ isOpen: true, mode: m, task: t })}
+              handleEditTask={(t) => setModalState({ isOpen: true, mode: "edit", task: t })}
+              handleDeleteTask={(id) => dispatch(deleteTask(id))}
+              expandedStatuses={expandedStatuses} expandedTasks={expandedTasks}
+              toggleStatus={(s) => setExpandedStatuses(p => ({ ...p, [s]: !p[s] }))}
+              toggleTask={(id) => setExpandedTasks(p => ({ ...p, [id]: !p[id] }))} dispatch={dispatch} />
+          )}
+          {activeView === "table" && (
+            <TableView tasks={Array.isArray(tasks) ? tasks : []} loading={loading} error={error} getStatusStyle={getStatusStyle}
+              handleOpenModal={(m, t) => setModalState({ isOpen: true, mode: m, task: t })}
+              handleEditTask={(t) => setModalState({ isOpen: true, mode: "edit", task: t })}
+              handleDeleteTask={(id) => dispatch(deleteTask(id))} />
+          )}
+        </div>
+      </div>
 
-      {activeView === "collapsed" && (
-        <CollapsedView
-          tasks={tasks}
-          loading={loading}
-          error={error}
-          getStatusStyle={getStatusStyle}
-          handleOpenModal={handleOpenModal}
-          handleEditTask={handleEditTask}
-          handleDeleteTask={(taskId) => dispatch(deleteTask(taskId))}
-          expandedStatuses={expandedStatuses}
-          expandedTasks={expandedTasks}
-          toggleStatus={toggleStatus}
-          toggleTask={toggleTask}
-          dispatch={dispatch}
-        />
-      )}
-
-      {activeView === "calendar" && (
-        <CalendarView
-          tasks={tasks}
-          loading={loading}
-          error={error}
-          handleOpenModal={handleOpenModal}
-          handleEditTask={handleEditTask}
-          setIsDragged={setIsDragged}
-        />
-      )}
-
-      {activeView === "table" && (
-        <TableView
-          tasks={Array.isArray(tasks) ? tasks : []}
-          loading={loading}
-          error={error}
-          getStatusStyle={getStatusStyle}
-          handleOpenModal={handleOpenModal}
-          handleEditTask={handleEditTask}
-          handleDeleteTask={(taskId) => dispatch(deleteTask(taskId))}
-        />
-      )}
-
-      {/* Task Modal */}
-      <TaskModal
-        isOpen={modalState.isOpen}
-        onClose={handleCloseModal}
-        mode={modalState.mode}
-        task={modalState.task}
-        statuses={statuses.map((status: any) => status.name)}
-        activeView={activeView}
-        handleEditTask={handleEditTask}
-        handleDeleteTask={(taskId) => dispatch(deleteTask(taskId))}
-        dispatch={dispatch}
+      <TaskModal 
+        isOpen={modalState.isOpen} onClose={() => setModalState(p => ({ ...p, isOpen: false }))} 
+        mode={modalState.mode} task={modalState.task} statuses={statuses.map((s: any) => s.name)} activeView={activeView}
+        handleEditTask={(t) => setModalState({ isOpen: true, mode: "edit", task: t })}
+        handleDeleteTask={(id) => dispatch(deleteTask(id))} dispatch={dispatch} 
       />
     </div>
   );

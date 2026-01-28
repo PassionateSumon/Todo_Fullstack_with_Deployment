@@ -146,6 +146,7 @@ const AuthSlice = createSlice({
         // console.log(action.payload);
         state.email = action.payload?.email;
         state.role = action.payload?.role;
+        state.isLoggedIn = true;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
