@@ -8,7 +8,7 @@ import {
   UserCircle, 
   CheckSquare, 
   Activity, 
-  UserPlus, 
+  // UserPlus, 
   BarChart2, 
   ShieldCheck,
   // ChevronRight
@@ -55,14 +55,14 @@ const HomeLayout = () => {
                   </div>
                 </NavLink>
 
-                {role === "admin" && (
+                {/* {role === "admin" && (
                   <NavLink to="invite" className={navLinkClasses}>
                     <div className="flex items-center gap-3">
                       <UserPlus className="w-5 h-5" />
                       <span>Invite</span>
                     </div>
                   </NavLink>
-                )}
+                )} */}
               </nav>
             </div>
 
