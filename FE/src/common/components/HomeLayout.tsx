@@ -48,12 +48,12 @@ const HomeLayout = () => {
                   </div>
                 </NavLink>
 
-                <NavLink to="status" className={navLinkClasses}>
+                {role === "admin" && <NavLink to="status" className={navLinkClasses}>
                   <div className="flex items-center gap-3">
                     <Activity className="w-5 h-5" />
                     <span>Status</span>
                   </div>
-                </NavLink>
+                </NavLink>}
 
                 {/* {role === "admin" && (
                   <NavLink to="invite" className={navLinkClasses}>

@@ -11,7 +11,7 @@ import { login, signup, clearError } from "../slices/AuthSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import type { AuthProps, FormData } from "../types/Auth.interface";
 import { toast } from "react-toastify";
-import { Hash } from "../../../common/utils/Hash";
+// import { Hash } from "../../../common/utils/Hash";
 
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -102,18 +102,19 @@ const Auth: FC<AuthProps> = ({ from }) => {
     setFieldErrors(newErrors);
     if (Object.values(newErrors).some((err) => err)) return;
 
-    const hashedPassword = await Hash.hashPassword(formData.password);
+    // const hashedPassword = await Hash.hashPassword(formData.password);
+    console.log(formData)
 
     const action = from === "signup"
       ? signup({
         name: formData.name!,
         email: formData.email!,
-        password: hashedPassword,
+        password: formData.password!,
         user_type: formData.user_type,
       })
       : login({
         emailOrUsername: formData.emailOrUsername,
-        password: hashedPassword,
+        password: formData.password,
       });
 
     // @ts-expect-error: dispatch type mismatch for async thunk

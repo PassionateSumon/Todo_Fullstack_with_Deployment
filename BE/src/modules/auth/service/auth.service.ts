@@ -7,6 +7,7 @@ import {
 import { db } from "../../../config/db.js";
 import { queueEmail } from "./emailQueue.service.js";
 import { JWTUtil } from "../../../common/utils/JWTUtils.js";
+import { CryptoUtil } from "../../../common/utils/Crypto.js";
 
 const ORIGIN =
   (process.env.NODE_ENV === "production"
@@ -47,11 +48,15 @@ export const signupService = async ({
       user_type = "admin";
     }
 
+    const hashedPassword = CryptoUtil.hashPassword(password, "10");
+
+    console.log(password, hashedPassword)
+
     const newUser = await db.User.create({
       name,
       email,
       username,
-      password,
+      password: hashedPassword,
       isActive: true,
       user_type,
       is_reset_password: false,
@@ -68,6 +73,8 @@ export const signupService = async ({
     // sendInviteEmail(newUser).catch((err) => {
     //   console.error(`Failed to send invite email to ${newUser.email}:`, err);
     // });
+
+    console.log(newUser)
 
     return {
       statusCode: 200,
@@ -117,7 +124,9 @@ export const loginService = async (
       };
     }
 
-    const isPasswordMatch = password === isExistUser.password;
+    const hashedInputPassword = CryptoUtil.hashPassword(password, "10");
+
+    const isPasswordMatch = hashedInputPassword === isExistUser.password;
 
     if (!isPasswordMatch) {
       return {
@@ -158,6 +167,8 @@ export const loginService = async (
     h.state("accessToken", accessToken, {
       path: "/",
       isHttpOnly: true,
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
       // ttl: 1 * 60 * 1000, // 1 minute
     });
@@ -165,6 +176,8 @@ export const loginService = async (
       path: "/",
       isHttpOnly: true,
       encoding: "base64",
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 7 * 24 * 60 * 60 * 1000, // 7 day
     });
 
@@ -271,11 +284,16 @@ export const refreshService = async (
     h.state("accessToken", newAccessToken, {
       path: "/",
       isHttpOnly: true,
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
     });
     h.state("refreshToken", newRefreshToken, {
       path: "/",
       isHttpOnly: true,
+      encoding: "base64",
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 

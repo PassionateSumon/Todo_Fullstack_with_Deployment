@@ -26,7 +26,7 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const [isLoading, setIsLoading] = useState(false);
   const [checkAuth, setCheckAuth] = useState(false);
-  const { isLoggedIn } = useSelector((state: RootState) => state.auth);
+  const { isLoggedIn, role } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
   useEffect(() => {
     if (isLoggedIn) {
@@ -77,7 +77,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomeLayout />}>
             <Route path="task" element={<TaskPage />} />
-            <Route path="status" element={<StatusPage />} />
+            {role === "admin" && <Route path="status" element={<StatusPage />} />}
             <Route path="invite" element={<InviteUserOrAdmin />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="dashboard/me" element={<GeneralDashboard />} />
