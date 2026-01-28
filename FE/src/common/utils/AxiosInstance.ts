@@ -201,14 +201,36 @@ axiosInstance.interceptors.response.use(
     }
 
     const originalRequest = error.config;
+    // If the failed request itself is the refresh endpoint, don't try to refresh again
+    const requestUrl = originalRequest.url || originalRequest.pathname || "";
+    if (requestUrl.includes("/auth/refresh")) {
+      loadingManager.stopLoading();
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const res = (await axiosInstance.post("/auth/refresh", {})) as any;
+        // Build full refresh URL from instance baseURL to ensure correct host
+        const base = (axiosInstance.defaults && axiosInstance.defaults.baseURL)
+          ? String(axiosInstance.defaults.baseURL).replace(/\/$/, "")
+          : "";
+        const refreshUrl = `${base}/auth/refresh`;
+
+        // Use global axios (no interceptors) to call refresh so we don't re-enter interceptors
+        const refreshRes = (await axios.post(refreshUrl, {}, {
+          withCredentials: true,
+          headers: { "X-Skip-Loader": "true" },
+        })) as any;
+
         loadingManager.notifyRefreshSuccess();
-        if (res.statusCode === 200) {
+
+        // If refresh returned success, retry the original request using axiosInstance
+        if (refreshRes?.status === 200 || refreshRes?.data?.statusCode === 200) {
+          // stop loading for the refresh call (it was skipped) and let the retried request manage loading
           loadingManager.stopLoading();
         }
+
         return await axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error("Token refresh failed!", refreshError);

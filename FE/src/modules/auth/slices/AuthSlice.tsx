@@ -6,7 +6,7 @@ import type {
   SignupPayload,
 } from "../types/Auth.interface";
 import axiosInstance from "../../../common/utils/AxiosInstance";
-import axios from "axios";
+// import axios from "axios";
 
 const initialState: AuthState = {
   isLoggedIn: false,
@@ -33,7 +33,7 @@ export const login = createAsyncThunk(
   async (payload: LoginPayload, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.post("/auth/login", payload);
-      return res.data;
+      return res;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Login failed");
     }
@@ -44,10 +44,8 @@ export const checkAuthStatus = createAsyncThunk(
   "auth/checkAuthStatus",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get("http://localhost:7030/auth/me", {
-        withCredentials: true,
-      });
-      return res.data;
+      const res = await axiosInstance.get("/auth/me");
+      return res;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || "Not authenticated"
@@ -143,10 +141,9 @@ const AuthSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action: any) => {
         state.loading = false;
-        // console.log(action.payload);
-        state.email = action.payload?.email;
-        state.role = action.payload?.role;
         state.isLoggedIn = true;
+        state.email = action.payload?.email || action.payload?.data?.email;
+        state.role = action.payload?.role || action.payload?.data?.role;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -170,15 +167,23 @@ const AuthSlice = createSlice({
         state.error = null;
       })
       .addCase(checkAuthStatus.fulfilled, (state, action: any) => {
-        // console.log(action.payload.data);
         state.loading = false;
         state.isLoggedIn = true;
-        state.role = action.payload?.data?.user?.role;
+        // support different shapes: { data: { user } } or { user } or { user: { role } }
+        state.role =
+          action.payload?.data?.user?.role ||
+          action.payload?.user?.role ||
+          action.payload?.data?.role ||
+          action.payload?.role ||
+          null;
       })
-      .addCase(checkAuthStatus.rejected, (state, action) => {
+      .addCase(checkAuthStatus.rejected, (state) => {
         state.loading = false;
         state.isLoggedIn = false;
-        state.error = action.payload as string;
+        // Don't set an error for the initial auth check rejection
+        // (unauthenticated users are expected). Leave `error` null
+        // so UI toasts won't show on app load for non-authenticated visitors.
+        state.error = null;
       })
       // OTP Send
       .addCase(otpSend.pending, (state) => {
