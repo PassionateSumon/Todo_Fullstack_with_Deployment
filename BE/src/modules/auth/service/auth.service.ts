@@ -413,6 +413,7 @@ export const myService = async (userId: string) => {
 
 export const logoutService = async (userId: string, h: ResponseToolkit) => {
   try {
+    console.log(userId)
     const user = await db.User.findByPk(userId);
     if (!user) {
       return {
@@ -421,6 +422,7 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
       };
     }
     // OTP verification requirement removed for now.
+    console.log(user)
 
     const deletedCount = await db.RefreshToken.destroy({
       where: {
