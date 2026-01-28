@@ -90,7 +90,13 @@ export const deleteStatusService = async ({id}: { id: number }) => {
         message: "Status not found",
       };
     }
+    
+    // Delete all tasks associated with this status first
+    await db.Task.destroy({ where: { status_id: id } });
+    
+    // Then delete the status
     await db.Status.destroy({ where: { id } });
+    
     return {
       statusCode: 200,
       message: "Status deleted successfully",

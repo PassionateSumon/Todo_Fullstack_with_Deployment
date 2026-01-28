@@ -4,6 +4,7 @@ import { deleteStatus, getAllStatuses } from "../slices/StatusSlice";
 import type { AppDispatch, RootState } from "../../../store/store";
 import StatusModal from "../components/StatusModal";
 import { Plus, Pencil, Trash2, Search, Hash } from "lucide-react";
+import DeleteConfirmModal from "../../../common/components/DeleteConfirmModal";
 
 const StatusPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -15,6 +16,12 @@ const StatusPage = () => {
     mode: "add" | "edit";
     status: any;
   }>({ isOpen: false, mode: "add", status: null });
+
+  const [deleteState, setDeleteState] = useState<{
+    isOpen: boolean;
+    statusId: number | null;
+    statusName: string | null;
+  }>({ isOpen: false, statusId: null, statusName: null });
 
   useEffect(() => {
     dispatch(getAllStatuses());
@@ -98,7 +105,7 @@ const StatusPage = () => {
                       <Pencil size={16} />
                     </button>
                     <button
-                      onClick={() => dispatch(deleteStatus({ id: Number(status.id) }))}
+                      onClick={() => setDeleteState({ isOpen: true, statusId: Number(status.id), statusName: status.name })}
                       className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
                       <Trash2 size={16} />
@@ -123,6 +130,21 @@ const StatusPage = () => {
         handleClose={() => setModalState({ ...modalState, isOpen: false })}
         mode={modalState.mode}
         status={modalState.status}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteState.isOpen}
+        title="Delete Status"
+        message={`Are you sure you want to delete this status? All associated tasks with "${deleteState.statusName}" will be deleted.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={() => setDeleteState({ isOpen: false, statusId: null, statusName: null })}
+        onConfirm={() => {
+          if (deleteState.statusId != null) {
+            dispatch(deleteStatus({ id: deleteState.statusId }));
+          }
+          setDeleteState({ isOpen: false, statusId: null, statusName: null });
+        }}
       />
     </div>
   );
