@@ -138,6 +138,7 @@ const TaskModal = ({
       if (updateTask.fulfilled.match(result)) {
         toast.success("Task updated!");
         onClose();
+        dispatch(getAllTasks({ viewType: activeView === "collapsed" ? "compact" : activeView }));
       }
     }
   };
