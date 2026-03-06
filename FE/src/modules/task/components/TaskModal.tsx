@@ -121,25 +121,24 @@ const TaskModal = ({
           </button>
         </div>
 
-        {/* Body Layout: Split View */}
         {/* BODY LAYOUT: Split into Main (Left) and Sidebar (Right) for better distribution */}
         <div className="flex flex-1 overflow-hidden">
           
-          {/* MAIN CONTENT COLUMN (LEFT) - Focused on Title and Editor */}
+          {/* MAIN CONTENT COLUMN */}
           <div className="flex-1 overflow-y-auto p-10 space-y-10 thin-scrollbar">
             
-            {/* Title Section: Larger, bolder, and borderless for high impact */}
+            {/* Title Section */}
             <div className="group">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <AlignLeft size={14} className="text-slate-400"/> Task Title
+              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-2">
+                <AlignLeft size={13} className="text-slate-300"/> Task Title
               </label>
               <input
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
                 disabled={isViewMode}
-                placeholder="Name your objective..."
-                className="w-full text-3xl font-extrabold text-slate-900 border-none p-0 focus:ring-0 placeholder:text-slate-200 bg-transparent transition-all"
+                placeholder="Name of Task"
+                className="w-full text-xl font-medium text-slate-700 border-b border-transparent focus:border-indigo-500/30 p-0 pb-1 focus:ring-0 placeholder:text-slate-200 bg-transparent transition-all duration-300"
               />
             </div>
 
