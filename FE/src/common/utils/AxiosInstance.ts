@@ -165,6 +165,7 @@ export const loadingManager = new LoadingManager();
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:7030/",
   withCredentials: true,
+  timeout: 10000, // 10 seconds timeout
 });
 
 axiosInstance.interceptors.request.use(
