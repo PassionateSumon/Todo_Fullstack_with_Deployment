@@ -142,21 +142,35 @@ const TaskModal = ({
               />
             </div>
 
-            {/* Editor Section: More padding and a cleaner container */}
-            <div className="space-y-4">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                Detailed Description
+            {/* Editor Section */}
+            <div className="space-y-3">
+              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-[0.12em] mb-1 flex items-center gap-2">
+                Description & Notes
               </label>
-              <div className={`rounded-2xl border ${isViewMode ? 'bg-slate-50/50 p-8 border-slate-100' : 'border-slate-200 shadow-sm overflow-hidden bg-white'}`}>
+              <div 
+                className={`rounded-xl transition-all duration-300 ${
+                  isViewMode 
+                  ? 'bg-slate-50/50 p-6 border border-slate-100' 
+                  : 'border border-slate-200 bg-white focus-within:border-indigo-500/50 focus-within:shadow-sm'
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {isViewMode ? (
-                  <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: formData.description || '<p className="italic text-slate-400">No content provided.</p>' }} />
+                  <div 
+                    className="prose prose-sm max-w-none text-slate-600 leading-relaxed font-normal" 
+                    dangerouslySetInnerHTML={{ __html: formData.description || '<p class="italic text-slate-300">No description provided.</p>' }} 
+                  />
                 ) : (
-                  <div className="min-h-[350px]">
+                  <div className="min-h-[300px] relative z-10 custom-editor-container">
                     <CKEditor
                       editor={ClassicEditor}
                       data={formData.description}
-                      onChange={(_, editor) => setFormData(p => ({ ...p, description: editor.getData() }))}
+                      onChange={(_, editor) => {
+                        const data = editor.getData();
+                        setFormData(p => ({ ...p, description: data }));
+                      }}
                       config={{
+                        placeholder: "Start typing task details...",
                         toolbar: ["heading", "bold", "italic", "link", "bulletedList", "numberedList", "undo", "redo"],
                         plugins: [Bold, Essentials, Heading, Indent, IndentBlock, Italic, Link, List, MediaEmbed, Paragraph, Table, Undo],
                       }}
