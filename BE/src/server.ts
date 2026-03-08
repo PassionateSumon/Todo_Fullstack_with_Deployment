@@ -48,13 +48,13 @@ const validateAccess = async (req: Hapi.Request, token: string) => {
     const decoded = verifyToken(token, accessSecret) as any;
     // console.log("validate --> ",decoded)
 
-    const user = await db.User.findOne({
-      where: { id: decoded?.userId },
-    });
-    // console.log("validate --> ",user)
-    if (!user) {
-      throw new ApiError("User not found!", 401);
-    }
+    // const user = await db.User.findOne({
+    //   where: { id: decoded?.userId },
+    // });
+    // // console.log("validate --> ",user)
+    // if (!user) {
+    //   throw new ApiError("User not found!", 401);
+    // }
 
     return {
       isValid: true,
@@ -191,6 +191,7 @@ const init = async () => {
 
   server.auth.default("jwt_access");
 
+  if (process.env.NODE_ENV !== "production") {
   server.events.on("response", function (req: Request) {
     console.log(
       `${req.info.remoteAddress}: ${req.method.toUpperCase()} ${req.path} --> ${
@@ -198,6 +199,7 @@ const init = async () => {
       }`
     );
   });
+}
 
   try {
     await connectDB();
