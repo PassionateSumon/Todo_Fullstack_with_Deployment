@@ -172,7 +172,7 @@ const init = async () => {
     isHttpOnly: true,
     isSecure: process.env.NODE_ENV === "production",
     isSameSite: sameSite,
-    encoding: "none" as const,
+    encoding: "iron" as const,
   };
 
   server.state("accessToken", {
