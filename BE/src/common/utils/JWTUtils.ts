@@ -45,7 +45,7 @@ export class JWTUtil {
 
   static verifyRole = () => {
     return async (request: Request, h: ResponseToolkit) => {
-      console.log(request.auth.credentials);
+      // console.log(request.auth.credentials);
       const { roleId: roleName } = request.auth.credentials as any;
       if (!roleName) throw new Error("Role not found");
       // console.log("Role:", roleName);

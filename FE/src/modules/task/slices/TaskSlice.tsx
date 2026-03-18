@@ -705,7 +705,7 @@ const TaskSlice = createSlice({
           start_date: action.meta.arg.start_date,
           end_date: action.meta.arg.end_date,
         };
-        console.log("line 708 - newTask:- ", newTask)
+        // console.log("line 708 - newTask:- ", newTask)
         if (Array.isArray(state.tasks)) {
           state.tasks.push(newTask);
         } else {
@@ -784,7 +784,7 @@ const TaskSlice = createSlice({
       .addCase(updateTask.pending, (state: any, action: any) => {
         // state.loading = false;
         const { id, payload } = action.meta.arg;
-        console.log(payload)
+        // console.log(payload)
         if (Array.isArray(state.tasks)) {
           const index = state.tasks.findIndex((task: any) => task.id === id);
           if (index !== -1) {
