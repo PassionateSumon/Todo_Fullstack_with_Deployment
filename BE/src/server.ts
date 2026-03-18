@@ -162,25 +162,15 @@ const init = async () => {
   await server.register(Cookie);
   await registerSwagger(server);
 
-  // Ensure cookies are parsed consistently for access/refresh tokens.
-  // In production this needs `SameSite=None` and `Secure` for cross-site behavior.
-  const sameSite: "None" | "Lax" =
-    process.env.NODE_ENV === "production" ? "None" : "Lax";
-
-  const cookieOptions = {
-    path: "/",
-    isHttpOnly: true,
-    isSecure: process.env.NODE_ENV === "production",
-    isSameSite: sameSite,
-    encoding: "iron" as const,
-  };
-
   server.auth.strategy("jwt_access", "cookie", {
     cookie: {
       name: "accessToken",
       password: process.env.COOKIE_SECRET!,
-      ...cookieOptions,
+      isHttpOnly: true,
+      isSecure: process.env.NODE_ENV === "production",
+      isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 15 * 60 * 1000,
+      path: "/",
     },
     validate: validateAccess,
   });
@@ -201,7 +191,7 @@ const init = async () => {
 
   server.auth.default("jwt_access");
 
-  // if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production") {
   server.events.on("response", function (req: Request) {
     console.log(
       `${req.info.remoteAddress}: ${req.method.toUpperCase()} ${req.path} --> ${
@@ -209,7 +199,7 @@ const init = async () => {
       }`
     );
   });
-// }
+}
 
   try {
     await connectDB();
