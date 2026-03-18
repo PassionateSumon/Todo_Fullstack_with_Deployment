@@ -169,7 +169,7 @@ const init = async () => {
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      ttl: 15 * 60 * 1000,
+      ttl: 1 * 24 * 60 * 60 * 1000,
       path: "/",
     },
     validate: validateAccess,
@@ -191,7 +191,7 @@ const init = async () => {
 
   server.auth.default("jwt_access");
 
-  if (process.env.NODE_ENV !== "production") {
+  // if (process.env.NODE_ENV !== "production") {
   server.events.on("response", function (req: Request) {
     console.log(
       `${req.info.remoteAddress}: ${req.method.toUpperCase()} ${req.path} --> ${
@@ -199,7 +199,7 @@ const init = async () => {
       }`
     );
   });
-}
+// }
 
   try {
     await connectDB();
