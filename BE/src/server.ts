@@ -171,17 +171,9 @@ const init = async () => {
     path: "/",
     isHttpOnly: true,
     isSecure: process.env.NODE_ENV === "production",
-    isSameSite: sameSite
+    isSameSite: sameSite,
+    encoding: "iron" as const,
   };
-
-  server.state("accessToken", {
-    ...cookieOptions,
-    ttl: 15 * 60 * 1000,
-  });
-  server.state("refreshToken", {
-    ...cookieOptions,
-    ttl: 7 * 24 * 60 * 60 * 1000,
-  });
 
   server.auth.strategy("jwt_access", "cookie", {
     cookie: {
