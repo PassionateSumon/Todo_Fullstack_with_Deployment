@@ -48,13 +48,13 @@ const validateAccess = async (req: Hapi.Request, token: string) => {
     const decoded = verifyToken(token, accessSecret) as any;
     // console.log("validate --> ",decoded)
 
-    // const user = await db.User.findOne({
-    //   where: { id: decoded?.userId },
-    // });
-    // // console.log("validate --> ",user)
-    // if (!user) {
-    //   throw new ApiError("User not found!", 401);
-    // }
+    const user = await db.User.findOne({
+      where: { id: decoded?.userId },
+    });
+    // console.log("validate --> ",user)
+    if (!user) {
+      throw new ApiError("User not found!", 401);
+    }
 
     return {
       isValid: true,
@@ -171,8 +171,7 @@ const init = async () => {
     path: "/",
     isHttpOnly: true,
     isSecure: process.env.NODE_ENV === "production",
-    isSameSite: sameSite,
-    encoding: "iron" as const,
+    isSameSite: sameSite
   };
 
   server.state("accessToken", {
