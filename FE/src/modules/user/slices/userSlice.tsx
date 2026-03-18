@@ -21,7 +21,7 @@ export const getUser = createAsyncThunk("user/getUser", async ({ id = null }: { 
 
 export const updateUser = createAsyncThunk("user/updateUser", async (data: { name: string }, { rejectWithValue, getState }) => {
     try {
-        console.log(data)
+        // console.log(data)
         const res = await axiosInstance.put(`/user/update`, { ...data }, {
             headers: { "X-Skip-Loader": "true" }
         });

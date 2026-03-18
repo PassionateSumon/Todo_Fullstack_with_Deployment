@@ -170,7 +170,7 @@ export const loginService = async (
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
-      encoding: "none"
+      encoding: "none",
     });
     h.state("refreshToken", refreshToken, {
       path: "/",
@@ -287,11 +287,12 @@ export const refreshService = async (
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000, // 1 day
+      encoding: "none",
     });
     h.state("refreshToken", newRefreshToken, {
       path: "/",
       isHttpOnly: true,
-      encoding: "base64",
+      encoding: "none",
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 7 * 24 * 60 * 60 * 1000, // 7 days

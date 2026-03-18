@@ -103,7 +103,7 @@ const Auth: FC<AuthProps> = ({ from }) => {
     if (Object.values(newErrors).some((err) => err)) return;
 
     // const hashedPassword = await Hash.hashPassword(formData.password);
-    console.log(formData)
+    // console.log(formData)
 
     const action = from === "signup"
       ? signup({
