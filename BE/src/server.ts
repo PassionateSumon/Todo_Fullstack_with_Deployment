@@ -15,7 +15,7 @@ const requiredEnvVars = [
   "JWT_REFRESH_SECRET",
   "COOKIE_SECRET",
   "PORT",
-  "DEV_ORIGIN",
+  process.env.NODE_ENV === "production" ? "PROD_ORIGIN" : "DEV_ORIGIN",
 ];
 const missingEnvVars = requiredEnvVars.filter(
   (varName) => !process.env[varName]
