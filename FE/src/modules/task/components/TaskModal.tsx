@@ -111,6 +111,16 @@ const TaskModal = ({
       return;
     }
 
+    // Validate that end_date is not before start_date
+    if (formData.start_date && formData.end_date) {
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      if (endDate < startDate) {
+        toast.error("Due date cannot be before start date.");
+        return;
+      }
+    }
+
     const payload = {
       name: formData.name,
       description: formData.description || undefined,
@@ -281,9 +291,13 @@ const TaskModal = ({
                 type="date"
                 value={formData.end_date}
                 onChange={handleChange}
-                disabled={isViewMode}
+                disabled={isViewMode || !formData.start_date}
+                min={formData.start_date || ""}
                 className={inputClass}
               />
+              {formData.start_date && !formData.end_date && (
+                <p className="text-xs text-slate-400 mt-1.5">Set deadline after start date</p>
+              )}
             </div>
           </div>
 

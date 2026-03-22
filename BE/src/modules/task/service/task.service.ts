@@ -19,6 +19,18 @@ export const createTaskService = async (
   userId: number
 ) => {
   try {
+    // Validate that end_date is not before start_date
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      if (endDate < startDate) {
+        return {
+          statusCode: 400,
+          message: "End date cannot be before start date",
+        };
+      }
+    }
+
     const status_id = await db.Status.findOne({ where: { name: status } });
     if (!status_id) {
       return {
@@ -194,6 +206,21 @@ export const updateTaskService = async (
         statusCode: 404,
         message: "Task not found",
       };
+    }
+
+    const dateToValidateStart = start_date !== undefined ? start_date : task.start_date;
+    const dateToValidateEnd = end_date !== undefined ? end_date : task.end_date;
+
+    // Validate that end_date is not before start_date
+    if (dateToValidateStart && dateToValidateEnd) {
+      const startDate = new Date(dateToValidateStart);
+      const endDate = new Date(dateToValidateEnd);
+      if (endDate < startDate) {
+        return {
+          statusCode: 400,
+          message: "End date cannot be before start date",
+        };
+      }
     }
 
     let status_id = task.status_id;
