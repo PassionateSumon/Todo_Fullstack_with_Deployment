@@ -333,6 +333,7 @@ const getDashBoardService = async () => {
     return {
       statusCode: statusCodes.SERVER_ISSUE,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -413,6 +414,7 @@ const getDashBoardServiceForUser = async (userId: number) => {
     return {
       statusCode: statusCodes.SERVER_ISSUE,
       message: error.message || "Internal server error",
+      data: null,
     };
   }
 };

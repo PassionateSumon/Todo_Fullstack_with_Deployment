@@ -28,6 +28,7 @@ export const createTaskService = async (
         return {
           statusCode: 400,
           message: "End date cannot be before start date",
+          data: null,
         };
       }
     }
@@ -41,6 +42,7 @@ export const createTaskService = async (
         return {
           statusCode: 404,
           message: "Status not found",
+          data: null,
         };
       }
       const whereClause = {
@@ -56,6 +58,7 @@ export const createTaskService = async (
         return {
           statusCode: 409,
           message: "Task already exists",
+          data: null,
         };
       }
 
@@ -74,6 +77,7 @@ export const createTaskService = async (
         return {
           statusCode: 400,
           message: "Task creation failed",
+          data: null,
         };
       }
       return {
@@ -86,6 +90,7 @@ export const createTaskService = async (
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -115,7 +120,7 @@ export const getAllTaskService = async (
         transaction,
       });
     });
-    if (!tasks) return { statusCode: 404, message: "Tasks not found" };
+    if (!tasks) return { statusCode: 404, message: "Tasks not found", data: null };
     // console.log("93: ", tasks);
 
     let result = {};
@@ -159,6 +164,7 @@ export const getAllTaskService = async (
     return {
       statusCode: 500,
       message: "Internal server error",
+      data: null,
     };
   }
 };
@@ -176,6 +182,7 @@ export const getSingleTaskService = async ({ id }: { id: number }) => {
       return {
         statusCode: 404,
         message: "Task not found",
+        data: null,
       };
     }
     return {
@@ -187,6 +194,7 @@ export const getSingleTaskService = async ({ id }: { id: number }) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -216,6 +224,7 @@ export const updateTaskService = async (
         return {
           statusCode: 404,
           message: "Task not found",
+          data: null,
         };
       }
 
@@ -230,6 +239,7 @@ export const updateTaskService = async (
           return {
             statusCode: 400,
             message: "End date cannot be before start date",
+            data: null,
           };
         }
       }
@@ -244,6 +254,7 @@ export const updateTaskService = async (
           return {
             statusCode: 404,
             message: "Status not found",
+            data: null,
           };
         }
         status_id = statusRecord.id;
@@ -275,6 +286,7 @@ export const updateTaskService = async (
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -287,6 +299,7 @@ export const deleteTaskService = async (id: number) => {
         return {
           statusCode: 404,
           message: "Task not found",
+          data: null,
         };
       }
       await db.Task.destroy({ where: { id }, transaction });
