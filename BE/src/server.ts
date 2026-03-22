@@ -48,13 +48,21 @@ const validateAccess = async (req: Hapi.Request, token: string) => {
     const decoded = verifyToken(token, accessSecret) as any;
     // console.log("validate --> ",decoded)
 
-    // const user = await db.User.findOne({
-    //   where: { id: decoded?.userId },
-    // });
-    // // console.log("validate --> ",user)
-    // if (!user) {
-    //   throw new ApiError("User not found!", 401);
-    // }
+    const user = await db.User.findOne({
+      where: { id: decoded?.userId },
+    });
+    if (!user || !user.isActive) {
+      throw new ApiError("User not found or inactive!", 401);
+    }
+
+    const tokenIssuedAt = decoded?.iat as number | undefined;
+    const lastLogoutAt = user?.lastLogoutAt
+      ? Math.floor(new Date(user.lastLogoutAt).getTime() / 1000)
+      : null;
+
+    if (lastLogoutAt && (!tokenIssuedAt || tokenIssuedAt <= lastLogoutAt)) {
+      throw new ApiError("Token has been revoked. Please login again.", 401);
+    }
 
     return {
       isValid: true,

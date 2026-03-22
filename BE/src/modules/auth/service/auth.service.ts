@@ -413,7 +413,6 @@ export const myService = async (userId: string) => {
 
 export const logoutService = async (userId: string, h: ResponseToolkit) => {
   try {
-    console.log(userId)
     const user = await db.User.findByPk(userId);
     if (!user) {
       return {
@@ -421,20 +420,19 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
         message: "User not found",
       };
     }
-    // OTP verification requirement removed for now.
-    console.log(user)
 
-    const deletedCount = await db.RefreshToken.destroy({
+    // Revoke all existing access tokens issued before now.
+    await db.User.update(
+      { lastLogoutAt: new Date() },
+      { where: { id: userId } }
+    );
+
+    await db.RefreshToken.destroy({
       where: {
         userId,
       },
     });
-    if (deletedCount === 0) {
-      return {
-        statusCode: 400,
-        message: "Refresh token not found",
-      };
-    }
+
     h.unstate("accessToken", {
       path: "/",
     });
