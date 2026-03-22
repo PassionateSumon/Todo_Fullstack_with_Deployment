@@ -9,6 +9,7 @@ export const createstatusService = async ({ name }: { name: string }) => {
         return {
           statusCode: 409,
           message: "Status already exists",
+          data: null,
         };
       }
 
@@ -17,6 +18,7 @@ export const createstatusService = async ({ name }: { name: string }) => {
         return {
           statusCode: 400,
           message: "Status creation failed",
+          data: null,
         };
       }
       return {
@@ -29,6 +31,7 @@ export const createstatusService = async ({ name }: { name: string }) => {
     return {
       statusCode: 500,
       message: "Internal server error",
+      data: null,
     };
   }
 };
@@ -47,6 +50,7 @@ export const getAllStatusService = async () => {
     return {
       statusCode: 500,
       message: "Internal server error",
+      data: null,
     };
   }
 };
@@ -69,6 +73,7 @@ export const updateStatusService = async ({
         return {
           statusCode: 404,
           message: "Status not found",
+          data: null,
         };
       }
       await db.Status.update({ name }, { where: { id }, transaction });
@@ -83,6 +88,7 @@ export const updateStatusService = async ({
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -95,6 +101,7 @@ export const deleteStatusService = async ({id}: { id: number }) => {
         return {
           statusCode: 404,
           message: "Status not found",
+          data: null,
         };
       }
 
@@ -111,6 +118,7 @@ export const deleteStatusService = async ({id}: { id: number }) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };

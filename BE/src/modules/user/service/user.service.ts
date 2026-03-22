@@ -18,6 +18,7 @@ export const getAllUsersService = async (userId: number) => {
       return {
         statusCode: 404,
         message: "Users not found",
+        data: null,
       };
     }
     return {
@@ -29,6 +30,7 @@ export const getAllUsersService = async (userId: number) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -50,6 +52,7 @@ export const getSingleUserService = async (
       return {
         statusCode: 404,
         message: "User not found",
+        data: null,
       };
     }
     return {
@@ -61,6 +64,7 @@ export const getSingleUserService = async (
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -77,6 +81,7 @@ export const updateDetailsService = async (
         return {
           statusCode: 404,
           message: "User not found",
+          data: null,
         };
       }
       await db.User.update(data, { where: { id }, transaction });
@@ -91,6 +96,7 @@ export const updateDetailsService = async (
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -103,6 +109,7 @@ export const toggleActiveService = async (id: number) => {
         return {
           statusCode: 404,
           message: "User not found",
+          data: null,
         };
       }
       await db.User.update(
@@ -120,6 +127,7 @@ export const toggleActiveService = async (id: number) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -132,6 +140,7 @@ export const deleteUserService = async (id: number) => {
         return {
           statusCode: 404,
           message: "User not found",
+          data: null,
         };
       }
       await db.User.destroy({ where: { id }, transaction });
@@ -145,6 +154,7 @@ export const deleteUserService = async (id: number) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
