@@ -44,6 +44,7 @@ export const signupService = async ({
         return {
           statusCode: 409,
           message: "User already exists",
+          data: null,
         };
       }
 
@@ -75,6 +76,7 @@ export const signupService = async ({
         return {
           statusCode: 400,
           message: "User registration failed",
+          data: null,
         };
       }
 
@@ -101,6 +103,7 @@ export const signupService = async ({
     return {
       statusCode: 500,
       message: error.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -124,6 +127,7 @@ export const loginService = async (
         return {
           statusCode: 400,
           message: "User not found",
+          data: null,
         };
       }
 
@@ -131,6 +135,7 @@ export const loginService = async (
         return {
           statusCode: 400,
           message: "User is inactive",
+          data: null,
         };
       }
 
@@ -142,6 +147,7 @@ export const loginService = async (
         return {
           statusCode: 400,
           message: "Invalid password",
+          data: null,
         };
       }
 
@@ -203,11 +209,13 @@ export const loginService = async (
       statusCode: result.statusCode,
       message: result.message,
       user: result.user,
+      data: null,
     };
   } catch (err: any) {
     return {
       statusCode: 500,
       message: "Internal server error",
+      data: null,
     };
   }
 };
@@ -217,6 +225,7 @@ export const otpSendService = async (email: string) => {
   return {
     statusCode: 400,
     message: "OTP feature is disabled",
+    data: null,
   };
 };
 
@@ -229,6 +238,7 @@ export const otpCheckService = async (
   return {
     statusCode: 400,
     message: "OTP verification is disabled",
+    data: null,
   };
 };
 
@@ -350,6 +360,7 @@ export const resetPasswordService = async ({
         return {
           statusCode: 400,
           message: "User not found",
+          data: null,
         };
       }
 
@@ -357,6 +368,7 @@ export const resetPasswordService = async ({
         return {
           statusCode: 400,
           message: "User is inactive",
+          data: null,
         };
       }
 
@@ -368,6 +380,7 @@ export const resetPasswordService = async ({
         return {
           statusCode: 400,
           message: "Invalid password",
+          data: null,
         };
       }
 
@@ -393,6 +406,7 @@ export const resetPasswordService = async ({
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
@@ -444,6 +458,7 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
         return {
           statusCode: 404,
           message: "User not found",
+          data: null,
         };
       }
 
@@ -463,6 +478,7 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
       return {
         statusCode: 200,
         message: "User logged out successfully",
+        data: null,
       };
     });
 
@@ -485,6 +501,7 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };

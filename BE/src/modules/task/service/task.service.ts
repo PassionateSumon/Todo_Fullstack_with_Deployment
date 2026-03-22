@@ -313,6 +313,7 @@ export const deleteTaskService = async (id: number) => {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
