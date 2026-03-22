@@ -64,7 +64,7 @@ const validateAccess = async (req: Hapi.Request, token: string) => {
       ? Math.floor(new Date(user.lastLogoutAt).getTime() / 1000)
       : null;
 
-    if (lastLogoutAt && (!tokenIssuedAt || tokenIssuedAt <= lastLogoutAt)) {
+    if (lastLogoutAt && (!tokenIssuedAt || tokenIssuedAt < lastLogoutAt)) {
       throw new ApiError("Token has been revoked. Please login again.", 401);
     }
 
