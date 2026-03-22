@@ -40,6 +40,11 @@ export default (sequelize: any, DataType: any) => {
         type: DataType.BOOLEAN,
         allowNull: false,
       },
+      lastLogoutAt: {
+        type: DataType.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
       user_type: {
         type: DataType.ENUM("admin", "user"),
         allowNull: false,

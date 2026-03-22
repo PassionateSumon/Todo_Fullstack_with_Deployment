@@ -1,14 +1,18 @@
 import { db } from "../../../config/db.js";
+import { withTransaction } from "../../../common/utils/transaction.js";
 
 export const getAllUsersService = async (userId: number) => {
   try {
-    const users = await db.User.findAll({
-      attributes: { exclude: ["password"] },
-      where: {
-        id: {
-          [db.Sequelize.Op.ne]: userId,
+    const users = await withTransaction(async (transaction) => {
+      return db.User.findAll({
+        attributes: { exclude: ["password"] },
+        where: {
+          id: {
+            [db.Sequelize.Op.ne]: userId,
+          },
         },
-      },
+        transaction,
+      });
     });
     if (!users) {
       return {
@@ -35,9 +39,12 @@ export const getSingleUserService = async (
 ) => {
   try {
     const currId = id === "null" ? userId : id;
-    const user = await db.User.findOne({
-      where: { id: currId },
-      attributes: { exclude: ["password"] },
+    const user = await withTransaction(async (transaction) => {
+      return db.User.findOne({
+        where: { id: currId },
+        attributes: { exclude: ["password"] },
+        transaction,
+      });
     });
     if (!user) {
       return {
@@ -64,20 +71,22 @@ export const updateDetailsService = async (
 ) => {
   // console.log(data)
   try {
-    const existedUser = await db.User.findOne({ where: { id } });
-    if (!existedUser) {
+    return await withTransaction(async (transaction) => {
+      const existedUser = await db.User.findOne({ where: { id }, transaction });
+      if (!existedUser) {
+        return {
+          statusCode: 404,
+          message: "User not found",
+        };
+      }
+      await db.User.update(data, { where: { id }, transaction });
+      const finalRes = await db.User.findOne({ where: { id }, transaction });
       return {
-        statusCode: 404,
-        message: "User not found",
+        statusCode: 200,
+        message: "User updated successfully",
+        data: finalRes,
       };
-    }
-    await db.User.update(data, { where: { id } });
-    const finalRes = await db.User.findOne({ where: { id } });
-    return {
-      statusCode: 200,
-      message: "User updated successfully",
-      data: finalRes,
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -88,24 +97,25 @@ export const updateDetailsService = async (
 
 export const toggleActiveService = async (id: number) => {
   try {
-    const existedUser = await db.User.findOne({ where: { id } });
-    // console.log(existedUser)
-    if (!existedUser) {
+    return await withTransaction(async (transaction) => {
+      const existedUser = await db.User.findOne({ where: { id }, transaction });
+      if (!existedUser) {
+        return {
+          statusCode: 404,
+          message: "User not found",
+        };
+      }
+      await db.User.update(
+        { isActive: !existedUser.isActive },
+        { where: { id }, transaction }
+      );
+      const finalRes = await db.User.findOne({ where: { id }, transaction });
       return {
-        statusCode: 404,
-        message: "User not found",
+        statusCode: 200,
+        message: "User updated successfully",
+        data: finalRes,
       };
-    }
-    await db.User.update(
-      { isActive: !existedUser.isActive },
-      { where: { id } }
-    );
-    const finalRes = await db.User.findOne({ where: { id } });
-    return {
-      statusCode: 200,
-      message: "User updated successfully",
-      data: finalRes,
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -116,19 +126,21 @@ export const toggleActiveService = async (id: number) => {
 
 export const deleteUserService = async (id: number) => {
   try {
-    const user = await db.User.findOne({ where: { id } });
-    if (!user) {
+    return await withTransaction(async (transaction) => {
+      const user = await db.User.findOne({ where: { id }, transaction });
+      if (!user) {
+        return {
+          statusCode: 404,
+          message: "User not found",
+        };
+      }
+      await db.User.destroy({ where: { id }, transaction });
       return {
-        statusCode: 404,
-        message: "User not found",
+        statusCode: 200,
+        message: "User deleted successfully",
+        data: { id: id },
       };
-    }
-    await db.User.destroy({ where: { id } });
-    return {
-      statusCode: 200,
-      message: "User deleted successfully",
-      data: { id: id },
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
