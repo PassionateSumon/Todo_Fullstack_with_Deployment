@@ -1,4 +1,5 @@
 import { db } from "../../../config/db.js";
+import { withTransaction } from "../../../common/utils/transaction.js";
 
 export const createTaskService = async (
   {
@@ -31,53 +32,56 @@ export const createTaskService = async (
       }
     }
 
-    const status_id = await db.Status.findOne({ where: { name: status } });
-    if (!status_id) {
-      return {
-        statusCode: 404,
-        message: "Status not found",
+    return await withTransaction(async (transaction) => {
+      const status_id = await db.Status.findOne({
+        where: { name: status },
+        transaction,
+      });
+      if (!status_id) {
+        return {
+          statusCode: 404,
+          message: "Status not found",
+        };
+      }
+      const whereClause = {
+        task_name: name,
+        status_id,
+        user_id: userId,
       };
-    }
-    const whereClause = {
-      task_name: name,
-      status_id,
-      user_id: userId,
-    };
-    const existed = await db.Task.findOne({
-      where: whereClause,
+      const existed = await db.Task.findOne({
+        where: whereClause,
+        transaction,
+      });
+      if (existed) {
+        return {
+          statusCode: 409,
+          message: "Task already exists",
+        };
+      }
+
+      const wrappedInput = {
+        task_name: name,
+        task_description: description ? description : null,
+        user_id: userId,
+        status_id: status_id.id,
+        priority: priority ? priority : null,
+        start_date: start_date ? start_date : null,
+        end_date: end_date ? end_date : null,
+      };
+
+      const result = await db.Task.create(wrappedInput, { transaction });
+      if (!result) {
+        return {
+          statusCode: 400,
+          message: "Task creation failed",
+        };
+      }
+      return {
+        statusCode: 200,
+        message: "Task created successfully",
+        data: result,
+      };
     });
-    // console.log("existed: --> ", existed);
-    if (existed) {
-      return {
-        statusCode: 409,
-        message: "Task already exists",
-      };
-    }
-
-    const wrappedInput = {
-      task_name: name,
-      task_description: description ? description : null,
-      user_id: userId,
-      status_id: status_id.id,
-      priority: priority ? priority : null,
-      start_date: start_date ? start_date : null,
-      end_date: end_date ? end_date : null,
-    };
-    // console.log("wrapped i/p: ", wrappedInput)
-
-    const result = await db.Task.create(wrappedInput);
-    if (!result) {
-      return {
-        statusCode: 400,
-        message: "Task creation failed",
-      };
-    }
-    // console.log("res --> ", JSON.stringify(result))
-    return {
-      statusCode: 200,
-      message: "Task created successfully",
-      data: result,
-    };
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -93,18 +97,23 @@ export const getAllTaskService = async (
   reqUserId?: string | null
 ) => {
   try {
-    const tasks = await db.Task.findAll({
-      where: { user_id: reqUserId !== "null" ? reqUserId : userId },
-      attributes: [
-        "id",
-        "task_name",
-        "task_description",
-        "status_id",
-        "priority",
-        "start_date",
-        "end_date",
-      ],
-      include: [{ model: db.Status, as: "status", attributes: ["id", "name"] }],
+    const tasks = await withTransaction(async (transaction) => {
+      return db.Task.findAll({
+        where: { user_id: reqUserId !== "null" ? reqUserId : userId },
+        attributes: [
+          "id",
+          "task_name",
+          "task_description",
+          "status_id",
+          "priority",
+          "start_date",
+          "end_date",
+        ],
+        include: [
+          { model: db.Status, as: "status", attributes: ["id", "name"] },
+        ],
+        transaction,
+      });
     });
     if (!tasks) return { statusCode: 404, message: "Tasks not found" };
     // console.log("93: ", tasks);
@@ -156,9 +165,12 @@ export const getAllTaskService = async (
 
 export const getSingleTaskService = async ({ id }: { id: number }) => {
   try {
-    const result = await db.Task.findOne({
-      where: { id },
-      include: [{ model: db.Status, attributes: ["id", "name"] }],
+    const result = await withTransaction(async (transaction) => {
+      return db.Task.findOne({
+        where: { id },
+        include: [{ model: db.Status, attributes: ["id", "name"] }],
+        transaction,
+      });
     });
     if (!result) {
       return {
@@ -198,65 +210,67 @@ export const updateTaskService = async (
   }
 ) => {
   try {
-    // console.log("id --> ", id);
-    const task = await db.Task.findOne({ where: { id } });
-    // console.log(JSON.stringify(task));
-    if (!task) {
-      return {
-        statusCode: 404,
-        message: "Task not found",
-      };
-    }
-
-    const dateToValidateStart = start_date !== undefined ? start_date : task.start_date;
-    const dateToValidateEnd = end_date !== undefined ? end_date : task.end_date;
-
-    // Validate that end_date is not before start_date
-    if (dateToValidateStart && dateToValidateEnd) {
-      const startDate = new Date(dateToValidateStart);
-      const endDate = new Date(dateToValidateEnd);
-      if (endDate < startDate) {
-        return {
-          statusCode: 400,
-          message: "End date cannot be before start date",
-        };
-      }
-    }
-
-    let status_id = task.status_id;
-    if (status) {
-      const statusRecord = await db.Status.findOne({ where: { name: status } });
-      if (!statusRecord) {
+    return await withTransaction(async (transaction) => {
+      const task = await db.Task.findOne({ where: { id }, transaction });
+      if (!task) {
         return {
           statusCode: 404,
-          message: "Status not found",
+          message: "Task not found",
         };
       }
-      status_id = statusRecord.id;
-    }
-    // console.log("status_id: --> ", status_id);
 
-    const updatedData = {
-      task_name: name ? name : task.task_name,
-      task_description: description ? description : task.task_description,
-      status_id: status_id,
-      priority: priority !== undefined ? priority : task.priority,
-      start_date: start_date !== undefined ? start_date : task.start_date,
-      end_date: end_date !== undefined ? end_date : task.end_date,
-    };
-    // console.log(updatedData);
-    await db.Task.update(updatedData, { where: { id } });
-    // console.log("here");
-    const finalRes = await db.Task.findOne({
-      where: { id },
-      include: [{ model: db.Status, as: "status", attributes: ["id", "name"] }],
+      const dateToValidateStart =
+        start_date !== undefined ? start_date : task.start_date;
+      const dateToValidateEnd = end_date !== undefined ? end_date : task.end_date;
+
+      if (dateToValidateStart && dateToValidateEnd) {
+        const startDate = new Date(dateToValidateStart);
+        const endDate = new Date(dateToValidateEnd);
+        if (endDate < startDate) {
+          return {
+            statusCode: 400,
+            message: "End date cannot be before start date",
+          };
+        }
+      }
+
+      let status_id = task.status_id;
+      if (status) {
+        const statusRecord = await db.Status.findOne({
+          where: { name: status },
+          transaction,
+        });
+        if (!statusRecord) {
+          return {
+            statusCode: 404,
+            message: "Status not found",
+          };
+        }
+        status_id = statusRecord.id;
+      }
+
+      const updatedData = {
+        task_name: name ? name : task.task_name,
+        task_description: description ? description : task.task_description,
+        status_id: status_id,
+        priority: priority !== undefined ? priority : task.priority,
+        start_date: start_date !== undefined ? start_date : task.start_date,
+        end_date: end_date !== undefined ? end_date : task.end_date,
+      };
+      await db.Task.update(updatedData, { where: { id }, transaction });
+      const finalRes = await db.Task.findOne({
+        where: { id },
+        include: [
+          { model: db.Status, as: "status", attributes: ["id", "name"] },
+        ],
+        transaction,
+      });
+      return {
+        statusCode: 200,
+        message: "Status updated successfully",
+        data: finalRes,
+      };
     });
-    // console.log(JSON.stringify(finalRes));
-    return {
-      statusCode: 200,
-      message: "Status updated successfully",
-      data: finalRes,
-    };
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -267,19 +281,21 @@ export const updateTaskService = async (
 
 export const deleteTaskService = async (id: number) => {
   try {
-    const task = await db.Task.findOne({ where: { id } });
-    if (!task) {
+    return await withTransaction(async (transaction) => {
+      const task = await db.Task.findOne({ where: { id }, transaction });
+      if (!task) {
+        return {
+          statusCode: 404,
+          message: "Task not found",
+        };
+      }
+      await db.Task.destroy({ where: { id }, transaction });
       return {
-        statusCode: 404,
-        message: "Task not found",
+        statusCode: 200,
+        message: "Task deleted successfully",
+        data: { id: id },
       };
-    }
-    await db.Task.destroy({ where: { id } });
-    return {
-      statusCode: 200,
-      message: "Task deleted successfully",
-      data: { id: id },
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,

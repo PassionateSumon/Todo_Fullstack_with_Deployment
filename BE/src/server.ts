@@ -5,6 +5,7 @@ import Cookie from "@hapi/cookie";
 import jwt from "jsonwebtoken";
 import { registerSwagger } from "./plugins/swagger.plugin.js";
 import { ApiError } from "./common/utils/ApiError.js";
+import { withTransaction } from "./common/utils/transaction.js";
 import { statusCodes } from "./common/constants/constants.js";
 import { db, connectDB } from "./config/db.js";
 import routesPlugin from "./plugins/routes.plugin.js";
@@ -48,8 +49,11 @@ const validateAccess = async (req: Hapi.Request, token: string) => {
     const decoded = verifyToken(token, accessSecret) as any;
     // console.log("validate --> ",decoded)
 
-    const user = await db.User.findOne({
-      where: { id: decoded?.userId },
+    const user = await withTransaction(async (transaction) => {
+      return await db.User.findOne({
+        where: { id: decoded?.userId },
+        transaction,
+      });
     });
     if (!user || !user.isActive) {
       throw new ApiError("User not found or inactive!", 401);
@@ -95,8 +99,11 @@ const validateRefresh = async (req: Hapi.Request) => {
 
     const decoded = verifyToken(token, refreshSecret) as any;
 
-    const refreshToken = await db.RefreshToken.findOne({
-      where: { token, userId: decoded.userId },
+    const refreshToken = await withTransaction(async (transaction) => {
+      return await db.RefreshToken.findOne({
+        where: { token, userId: decoded.userId },
+        transaction,
+      });
     });
     if (!refreshToken || refreshToken.expiresAt < new Date()) {
       throw new ApiError(
@@ -105,8 +112,11 @@ const validateRefresh = async (req: Hapi.Request) => {
       );
     }
 
-    const user = await db.User.findOne({
-      where: { id: decoded.userId },
+    const user = await withTransaction(async (transaction) => {
+      return await db.User.findOne({
+        where: { id: decoded.userId },
+        transaction,
+      });
     });
     if (!user || !user.isActive) {
       throw new ApiError(

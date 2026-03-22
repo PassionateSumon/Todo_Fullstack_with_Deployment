@@ -1,29 +1,30 @@
 import { db } from "../../../config/db.js";
+import { withTransaction } from "../../../common/utils/transaction.js";
 
 export const createstatusService = async ({ name }: { name: string }) => {
   try {
-    const existed = await db.Status.findOne({ where: { name } });
-    // console.log("existed: --> ", existed);
-    if (existed) {
-      return {
-        statusCode: 409,
-        message: "Status already exists",
-      };
-    }
+    return await withTransaction(async (transaction) => {
+      const existed = await db.Status.findOne({ where: { name }, transaction });
+      if (existed) {
+        return {
+          statusCode: 409,
+          message: "Status already exists",
+        };
+      }
 
-    const result = await db.Status.create({ name });
-    if (!result) {
+      const result = await db.Status.create({ name }, { transaction });
+      if (!result) {
+        return {
+          statusCode: 400,
+          message: "Status creation failed",
+        };
+      }
       return {
-        statusCode: 400,
-        message: "Status creation failed",
+        statusCode: 200,
+        message: "Status created successfully",
+        data: result,
       };
-    }
-    // console.log(result)
-    return {
-      statusCode: 200,
-      message: "Status created successfully",
-      data: result,
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -34,7 +35,9 @@ export const createstatusService = async ({ name }: { name: string }) => {
 
 export const getAllStatusService = async () => {
   try {
-    const result = await db.Status.findAll({ attributes: ["id", "name"] });
+    const result = await withTransaction(async (transaction) => {
+      return db.Status.findAll({ attributes: ["id", "name"], transaction });
+    });
     return {
       statusCode: 200,
       message: "Status fetched successfully",
@@ -56,23 +59,26 @@ export const updateStatusService = async ({
   name: string;
 }) => {
   try {
-    const result = await db.Status.findOne(
-      { where: { id } },
-      { attributes: ["id", "name"] }
-    );
-    if (!result) {
+    return await withTransaction(async (transaction) => {
+      const result = await db.Status.findOne({
+        where: { id },
+        attributes: ["id", "name"],
+        transaction,
+      });
+      if (!result) {
+        return {
+          statusCode: 404,
+          message: "Status not found",
+        };
+      }
+      await db.Status.update({ name }, { where: { id }, transaction });
+      const finalRes = await db.Status.findOne({ where: { id }, transaction });
       return {
-        statusCode: 404,
-        message: "Status not found",
+        statusCode: 200,
+        message: "Status updated successfully",
+        data: finalRes,
       };
-    }
-    await db.Status.update({ name }, { where: { id } });
-    const finalRes = await db.Status.findOne({ where: { id } });
-    return {
-      statusCode: 200,
-      message: "Status updated successfully",
-      data: finalRes,
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -83,25 +89,24 @@ export const updateStatusService = async ({
 
 export const deleteStatusService = async ({id}: { id: number }) => {
   try {
-    const result = await db.Status.findOne({ where: { id } });
-    if (!result) {
+    return await withTransaction(async (transaction) => {
+      const result = await db.Status.findOne({ where: { id }, transaction });
+      if (!result) {
+        return {
+          statusCode: 404,
+          message: "Status not found",
+        };
+      }
+
+      await db.Task.destroy({ where: { status_id: id }, transaction });
+      await db.Status.destroy({ where: { id }, transaction });
+
       return {
-        statusCode: 404,
-        message: "Status not found",
+        statusCode: 200,
+        message: "Status deleted successfully",
+        data: { id: id },
       };
-    }
-    
-    // Delete all tasks associated with this status first
-    await db.Task.destroy({ where: { status_id: id } });
-    
-    // Then delete the status
-    await db.Status.destroy({ where: { id } });
-    
-    return {
-      statusCode: 200,
-      message: "Status deleted successfully",
-      data: {id: id},
-    };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,

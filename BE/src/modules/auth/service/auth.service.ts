@@ -8,6 +8,7 @@ import { db } from "../../../config/db.js";
 import { queueEmail } from "./emailQueue.service.js";
 import { JWTUtil } from "../../../common/utils/JWTUtils.js";
 import { CryptoUtil } from "../../../common/utils/Crypto.js";
+import { withTransaction } from "../../../common/utils/transaction.js";
 
 const ORIGIN =
   (process.env.NODE_ENV === "production"
@@ -34,59 +35,67 @@ export const signupService = async ({
   user_type,
 }: signupPayload) => {
   try {
-    const existingUser = await db.User.findOne({ where: { email } });
-    if (existingUser) {
+    return await withTransaction(async (transaction) => {
+      const existingUser = await db.User.findOne({
+        where: { email },
+        transaction,
+      });
+      if (existingUser) {
+        return {
+          statusCode: 409,
+          message: "User already exists",
+        };
+      }
+
+      const username = `user_${Math.floor(Math.random() * 1000000)}`;
+
+      if (!user_type) {
+        user_type = "admin";
+      }
+
+      const hashedPassword = CryptoUtil.hashPassword(password, "10");
+
+      console.log(password, hashedPassword);
+
+      const newUser = await db.User.create(
+        {
+          name,
+          email,
+          username,
+          password: hashedPassword,
+          isActive: true,
+          user_type,
+          is_reset_password: false,
+          isOtpVerified: false,
+        },
+        { transaction }
+      );
+
+      if (!newUser) {
+        return {
+          statusCode: 400,
+          message: "User registration failed",
+        };
+      }
+
+      // sendInviteEmail(newUser).catch((err) => {
+      //   console.error(`Failed to send invite email to ${newUser.email}:`, err);
+      // });
+
+      console.log(newUser);
+
       return {
-        statusCode: 409,
-        message: "User already exists",
+        statusCode: 200,
+        message: "User registered successfully",
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          username: newUser.username,
+          user_type: newUser.user_type,
+        },
       };
-    }
-
-    const username = `user_${Math.floor(Math.random() * 1000000)}`;
-
-    if (!user_type) {
-      user_type = "admin";
-    }
-
-    const hashedPassword = CryptoUtil.hashPassword(password, "10");
-
-    console.log(password, hashedPassword)
-
-    const newUser = await db.User.create({
-      name,
-      email,
-      username,
-      password: hashedPassword,
-      isActive: true,
-      user_type,
-      is_reset_password: false,
-      isOtpVerified: false,
     });
-
-    if (!newUser) {
-      return {
-        statusCode: 400,
-        message: "User registration failed",
-      };
-    }
-
-    // sendInviteEmail(newUser).catch((err) => {
-    //   console.error(`Failed to send invite email to ${newUser.email}:`, err);
-    // });
-
-    console.log(newUser)
-
-    return {
-      statusCode: 200,
-      message: "User registered successfully",
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        username: newUser.username,
-        user_type: newUser.user_type,
-      },
-    };
   } catch (error: any) {
     // console.error(error);
     return {
@@ -101,77 +110,88 @@ export const loginService = async (
   h: ResponseToolkit
 ) => {
   try {
-    const isExistUser = await db.User.findOne({
-      where: {
-        [db.Sequelize.Op.or]: [
-          { email: emailOrUsername },
-          { username: emailOrUsername },
-        ],
-      },
-    });
-    // console.log(isExistUser)
-    if (!isExistUser) {
-      return {
-        statusCode: 400,
-        message: "User not found",
-      };
-    }
-
-    if (!isExistUser.isActive) {
-      return {
-        statusCode: 400,
-        message: "User is inactive",
-      };
-    }
-
-    const hashedInputPassword = CryptoUtil.hashPassword(password, "10");
-
-    const isPasswordMatch = hashedInputPassword === isExistUser.password;
-
-    if (!isPasswordMatch) {
-      return {
-        statusCode: 400,
-        message: "Invalid password",
-      };
-    }
-    // if (!isExistUser.is_reset_password) {
-    //   return {
-    //     statusCode: 400,
-    //     message: "Please reset your password",
-    //   };
-    // }
-
-    const accessToken = JWTUtil.generateAccessToken(
-      isExistUser.id,
-      isExistUser.user_type
-    );
-    const refreshToken = JWTUtil.generateRefreshToken(
-      isExistUser.id,
-      isExistUser.user_type
-    );
-
-    try {
-      await db.RefreshToken.create({
-        token: refreshToken,
-        userId: isExistUser.id,
+    const result = await withTransaction(async (transaction) => {
+      const isExistUser = await db.User.findOne({
+        where: {
+          [db.Sequelize.Op.or]: [
+            { email: emailOrUsername },
+            { username: emailOrUsername },
+          ],
+        },
+        transaction,
       });
-      // console.log(res)
-    } catch (err: any) {
-      console.log(err);
+      if (!isExistUser) {
+        return {
+          statusCode: 400,
+          message: "User not found",
+        };
+      }
+
+      if (!isExistUser.isActive) {
+        return {
+          statusCode: 400,
+          message: "User is inactive",
+        };
+      }
+
+      const hashedInputPassword = CryptoUtil.hashPassword(password, "10");
+
+      const isPasswordMatch = hashedInputPassword === isExistUser.password;
+
+      if (!isPasswordMatch) {
+        return {
+          statusCode: 400,
+          message: "Invalid password",
+        };
+      }
+
+      const accessToken = JWTUtil.generateAccessToken(
+        isExistUser.id,
+        isExistUser.user_type
+      );
+      const refreshToken = JWTUtil.generateRefreshToken(
+        isExistUser.id,
+        isExistUser.user_type
+      );
+
+      await db.RefreshToken.create(
+        {
+          token: refreshToken,
+          userId: isExistUser.id,
+        },
+        { transaction }
+      );
+
       return {
-        statusCode: 500,
-        message: "Internal server error for creating refresh token",
+        statusCode: 200,
+        message: "User logged in successfully",
+        accessToken,
+        refreshToken,
+        user: {
+          id: isExistUser.id,
+          name: isExistUser.name,
+          email: isExistUser.email,
+          role: isExistUser.user_type,
+          username: isExistUser.username,
+          user_type: isExistUser.user_type,
+          isActive: isExistUser.isActive,
+          isOtpVerified: isExistUser.isOtpVerified,
+        },
       };
+    });
+
+    if (result.statusCode !== 200) {
+      return result;
     }
 
-    h.state("accessToken", accessToken, {
+    h.state("accessToken", result.accessToken, {
       path: "/",
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000,
     });
-    h.state("refreshToken", refreshToken, {
+    h.state("refreshToken", result.refreshToken, {
       path: "/",
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
@@ -180,18 +200,9 @@ export const loginService = async (
     });
 
     return {
-      statusCode: 200,
-      message: "User logged in successfully",
-      user: {
-        id: isExistUser.id,
-        name: isExistUser.name,
-        email: isExistUser.email,
-        role: isExistUser.user_type,
-        username: isExistUser.username,
-        user_type: isExistUser.user_type,
-        isActive: isExistUser.isActive,
-        isOtpVerified: isExistUser.isOtpVerified,
-      },
+      statusCode: result.statusCode,
+      message: result.message,
+      user: result.user,
     };
   } catch (err: any) {
     return {
@@ -230,63 +241,72 @@ export const refreshService = async (
       return {
         statusCode: 401,
         message: "Refresh token not found",
+        data: null,
       };
     }
 
-    // Validate refreshToken in the database
-    const tokenRecord = await db.RefreshToken.findOne({
-      where: { token: refreshToken },
-      include: [{ model: db.User, as: "user" }],
-    });
+    const result = await withTransaction(async (transaction) => {
+      // Validate refreshToken in the database
+      const tokenRecord = await db.RefreshToken.findOne({
+        where: { token: refreshToken },
+        include: [{ model: db.User, as: "user" }],
+        transaction,
+      });
 
-    if (!tokenRecord || !tokenRecord.user) {
-      return {
-        statusCode: 401,
-        message: "Invalid or expired refresh token",
-      };
-    }
+      if (!tokenRecord || !tokenRecord.user) {
+        return {
+          statusCode: 401,
+          message: "Invalid or expired refresh token",
+          data: null,
+        };
+      }
 
-    // Verify user is active
-    if (!tokenRecord.user.isActive) {
-      return {
-        statusCode: 403,
-        message: "User is inactive",
-      };
-    }
+      // Verify user is active
+      if (!tokenRecord.user.isActive) {
+        return {
+          statusCode: 403,
+          message: "User is inactive",
+          data: null,
+        };
+      }
 
-    // Generate new tokens
-    const newAccessToken = JWTUtil.generateAccessToken(
-      tokenRecord.user.id,
-      tokenRecord.user.user_type
-    );
-    const newRefreshToken = JWTUtil.generateRefreshToken(
-      tokenRecord.user.id,
-      tokenRecord.user.user_type
-    );
+      // Generate new tokens
+      const newAccessToken = JWTUtil.generateAccessToken(
+        tokenRecord.user.id,
+        tokenRecord.user.user_type
+      );
+      const newRefreshToken = JWTUtil.generateRefreshToken(
+        tokenRecord.user.id,
+        tokenRecord.user.user_type
+      );
 
-    // Update the RefreshToken table
-    try {
       await db.RefreshToken.update(
         { token: newRefreshToken },
-        { where: { token: refreshToken } }
+        { where: { token: refreshToken }, transaction }
       );
-    } catch (err: any) {
-      console.log(err);
+
       return {
-        statusCode: 500,
-        message: "Internal server error for updating refresh token",
+        statusCode: 200,
+        message: "Tokens refreshed successfully",
+        newAccessToken,
+        newRefreshToken,
+        data: {},
       };
+    });
+
+    if (result.statusCode !== 200) {
+      return result;
     }
 
     // Set new HTTP-only cookies
-    h.state("accessToken", newAccessToken, {
+    h.state("accessToken", result.newAccessToken, {
       path: "/",
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
       isSameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       ttl: 1 * 24 * 60 * 60 * 1000,
     });
-    h.state("refreshToken", newRefreshToken, {
+    h.state("refreshToken", result.newRefreshToken, {
       path: "/",
       isHttpOnly: true,
       isSecure: process.env.NODE_ENV === "production",
@@ -304,6 +324,7 @@ export const refreshService = async (
     return {
       statusCode: 500,
       message: "Internal server error",
+      data: null,
     };
   }
 };
@@ -314,57 +335,60 @@ export const resetPasswordService = async ({
   newPassword,
 }: ResetPasswordPayload) => {
   try {
-    const isExistUser = await db.User.findOne({
-      where: {
-        [db.Sequelize.Op.or]: [
-          { email: emailOrUsername },
-          { username: emailOrUsername },
-        ],
-      },
+    return await withTransaction(async (transaction) => {
+      const isExistUser = await db.User.findOne({
+        where: {
+          [db.Sequelize.Op.or]: [
+            { email: emailOrUsername },
+            { username: emailOrUsername },
+          ],
+        },
+        transaction,
+      });
+
+      if (!isExistUser) {
+        return {
+          statusCode: 400,
+          message: "User not found",
+        };
+      }
+
+      if (!isExistUser.isActive) {
+        return {
+          statusCode: 400,
+          message: "User is inactive",
+        };
+      }
+
+      // console.log(tempPassword);
+      // console.log(isExistUser.password);
+      const isPasswordMatch = tempPassword === isExistUser.password;
+
+      if (!isPasswordMatch) {
+        return {
+          statusCode: 400,
+          message: "Invalid password",
+        };
+      }
+
+      await db.User.update(
+        { password: newPassword, is_reset_password: true },
+        { where: { id: isExistUser.id }, transaction }
+      );
+
+      return {
+        statusCode: 200,
+        message: "Password reset successfully",
+        user: {
+          id: isExistUser.id,
+          name: isExistUser.name,
+          email: isExistUser.email,
+          username: isExistUser.username,
+          user_type: isExistUser.user_type,
+          isActive: isExistUser.isActive,
+        },
+      };
     });
-
-    if (!isExistUser) {
-      return {
-        statusCode: 400,
-        message: "User not found",
-      };
-    }
-
-    if (!isExistUser.isActive) {
-      return {
-        statusCode: 400,
-        message: "User is inactive",
-      };
-    }
-
-    // console.log(tempPassword);
-    // console.log(isExistUser.password);
-    const isPasswordMatch = tempPassword === isExistUser.password;
-
-    if (!isPasswordMatch) {
-      return {
-        statusCode: 400,
-        message: "Invalid password",
-      };
-    }
-
-    await db.User.update(
-      { password: newPassword, is_reset_password: true },
-      { where: { id: isExistUser.id } }
-    );
-
-    return {
-      statusCode: 200,
-      message: "Password reset successfully",
-      user: {
-        id: isExistUser.id,
-        name: isExistUser.name,
-        email: isExistUser.email,
-        username: isExistUser.username,
-        user_type: isExistUser.user_type,
-        isActive: isExistUser.isActive,
-      },
-    };
   } catch (err: any) {
     return {
       statusCode: 500,
@@ -375,60 +399,76 @@ export const resetPasswordService = async ({
 
 export const myService = async (userId: string) => {
   try {
-    const user = await db.User.findByPk(userId);
-    if (!user) {
-      return {
-        statusCode: 404,
-        message: "User not found",
-      };
-    }
-    // OTP verification requirement removed for now.
+    return await withTransaction(async (transaction) => {
+      const user = await db.User.findByPk(userId, { transaction });
+      if (!user) {
+        return {
+          statusCode: 404,
+          message: "User not found",
+          data: null,
+        };
+      }
+      // OTP verification requirement removed for now.
 
-    return {
-      statusCode: 200,
-      message: "User fetched successfully",
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.user_type,
-          username: user.username,
-          user_type: user.user_type,
-          isActive: user.isActive,
-          isOtpVerified: user.isOtpVerified,
+      return {
+        statusCode: 200,
+        message: "User fetched successfully",
+        data: {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.user_type,
+            username: user.username,
+            user_type: user.user_type,
+            isActive: user.isActive,
+            isOtpVerified: user.isOtpVerified,
+          },
         },
-      },
-    };
+      };
+    });
   } catch (err: any) {
     return {
       statusCode: 500,
       message: err.message || "Internal server error",
+      data: null,
     };
   }
 };
 
 export const logoutService = async (userId: string, h: ResponseToolkit) => {
   try {
-    const user = await db.User.findByPk(userId);
-    if (!user) {
+    const result = await withTransaction(async (transaction) => {
+      const user = await db.User.findByPk(userId, { transaction });
+      if (!user) {
+        return {
+          statusCode: 404,
+          message: "User not found",
+        };
+      }
+
+      // Revoke all existing access tokens issued before now.
+      await db.User.update(
+        { lastLogoutAt: new Date() },
+        { where: { id: userId }, transaction }
+      );
+
+      await db.RefreshToken.destroy({
+        where: {
+          userId,
+        },
+        transaction,
+      });
+
       return {
-        statusCode: 404,
-        message: "User not found",
+        statusCode: 200,
+        message: "User logged out successfully",
       };
-    }
-
-    // Revoke all existing access tokens issued before now.
-    await db.User.update(
-      { lastLogoutAt: new Date() },
-      { where: { id: userId } }
-    );
-
-    await db.RefreshToken.destroy({
-      where: {
-        userId,
-      },
     });
+
+    if (result.statusCode !== 200) {
+      return result;
+    }
 
     h.unstate("accessToken", {
       path: "/",
@@ -437,8 +477,8 @@ export const logoutService = async (userId: string, h: ResponseToolkit) => {
       path: "/",
     });
     return {
-      statusCode: 200,
-      message: "User logged out successfully",
+      statusCode: result.statusCode,
+      message: result.message,
       data: {},
     };
   } catch (err: any) {
